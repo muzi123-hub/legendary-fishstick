@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html data-page-node-id="UTgYMp1gxWtaTkMRQRDTsA" lang="zh-CN">
+<head data-page-node-id="wiilC42QjhVa3ZYEBH6BTE">
+<meta data-page-node-id="6leeSityhi6qixSx1rYfxP" charset="utf-8">
+<meta data-page-node-id="cMoECgEGM2IvndFUmJMxUW" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,shrink-to-fit=no,viewport-fit=cover" name="viewport">
+<meta data-page-node-id="prr0LNcObwGLltlvrj3gPt" content="yes" name="apple-mobile-web-app-capable">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='11' fill='%23e8c877'/%3E%3C/svg%3E">
+<title data-page-node-id="bmfSGcTc4oJYm21dSUpKFx" data-pnid-children="klJ6FEBb9LznOkj81wa51z">暗星之球 · UMBRA ORB / 无限星潮</title>
+<style data-page-node-id="BlgKKhzE9YQBC8CTtiq06x" data-pnid-children="rDp9RwjDKZHsfrWxxG6kKE">
+  :root{
+    --void:#070b1c;--deep:#0b1436;--panel:#101c46;--panel2:#18245a;
+    --indigo:#2b2f70;--violet:#5b46a8;--purple:#8a63d2;
+    --cyan:#6fd0e8;--gold:#e8c877;--gold2:#f7e6b0;--star:#eef1ff;--red:#d96a7a;
+  }
+  /* touch-action 不是继承属性，只在个别元素上设会漏；这里对所有元素统一关闭 */
+  *,*::before,*::after{box-sizing:border-box;touch-action:none}
+  html,body{margin:0;height:100%;overflow:hidden;color:var(--star);
+    font-family:"Courier New",Consolas,"Microsoft YaHei",monospace;
+    background:radial-gradient(ellipse at 50% 28%,#182452 0%,#0a1130 55%,#04060f 100%)}
+  /* 界面锁定：整页固定成一屏，禁掉页面滚动 / 回弹 / 长按菜单 / 文本选择 / 双击缩放 */
+  /* 只有 touch-action:none 才真正关掉双指缩放与双击缩放；
+     manipulation 仍允许双指缩放，而安卓上 user-scalable=no 常被系统/WebView 忽略 */
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;overscroll-behavior:none;
+    touch-action:none}
+  body{position:fixed;top:0;left:0;width:100%;height:100%;overscroll-behavior:none;
+    touch-action:none;-webkit-user-select:none;user-select:none;
+    -webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+  canvas,#ui,#touch,#toolbar{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.75;
+    background-image:
+      radial-gradient(1px 1px at 8% 14%,#eef1ff,transparent),radial-gradient(1px 1px at 21% 72%,#6fd0e8,transparent),
+      radial-gradient(1px 1px at 34% 26%,#e8c877,transparent),radial-gradient(1px 1px at 47% 88%,#eef1ff,transparent),
+      radial-gradient(1px 1px at 61% 9%,#c9a6ff,transparent),radial-gradient(1px 1px at 73% 62%,#6fd0e8,transparent),
+      radial-gradient(1px 1px at 86% 33%,#e8c877,transparent),radial-gradient(1px 1px at 94% 81%,#eef1ff,transparent)}
+  #wrap{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    overflow:hidden;touch-action:none;
+    padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+  /* 舞台尺寸由脚本按 16:9 设计视野等比算出并居中；
+     角色/怪物的画面比例因此与设计稿一致，不随手机屏幕变宽而变形或显小 */
+  #stage{position:relative;flex:0 0 auto;display:block;width:480px;height:270px;
+    overflow:hidden;touch-action:none}
+  canvas{display:block;flex:0 0 auto;touch-action:none;image-rendering:pixelated;image-rendering:crisp-edges;background:var(--void)}
+  #ui{position:absolute;inset:0;pointer-events:none;font-size:clamp(10px,1.75vmin,17px);line-height:1.6}
+  #hint{position:absolute;bottom:.15em;left:0;right:0;text-align:center;color:#6a78a8;font-size:.68em;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #toast{position:absolute;top:27%;left:50%;transform:translateX(-50%) translateY(-7px);
+    min-width:13em;max-width:84%;padding:.45em 1.2em .45em 2.5em;white-space:nowrap;
+    color:var(--star);font-size:.88em;opacity:0;pointer-events:none;
+    transition:opacity .2s,transform .2s;letter-spacing:.05em;
+    background:linear-gradient(180deg,#1b2a63,#0d1740);border:1px solid var(--cyan);border-radius:2px;
+    box-shadow:0 0 0 2px #070b1c,0 0 20px rgba(111,208,232,.5),inset 0 0 14px rgba(111,208,232,.14);
+    text-shadow:1px 1px 0 #05081a;z-index:9}
+  #toast::before{content:"";position:absolute;left:.7em;top:50%;width:.55em;height:.55em;
+    transform:translateY(-50%) rotate(45deg);background:var(--cyan);box-shadow:0 0 9px var(--cyan)}
+  #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  #toast[data-kind="blessing"]{background:linear-gradient(180deg,#3a2a70,#1a1246);border-color:var(--purple)}
+  #toast[data-kind="blessing"]::before{background:#c9a6ff;box-shadow:0 0 9px #c9a6ff}
+  #toast[data-kind="victory"]{background:linear-gradient(180deg,#5a4420,#2a2038);border-color:var(--gold);color:var(--gold2)}
+  #toast[data-kind="victory"]::before{background:var(--gold2);box-shadow:0 0 9px var(--gold2)}
+  #toast[data-kind="warning"]{background:linear-gradient(180deg,#5a2436,#2a1226);border-color:var(--red);color:#ffd8de}
+  #toast[data-kind="warning"]::before{background:var(--red);box-shadow:0 0 9px var(--red)}
+  #pause{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    background:rgba(5,9,26,.82);font-size:2.2em;letter-spacing:.35em;color:var(--gold)}
+  .hidden{display:none!important}
+  #panel{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    background:#050a1e;pointer-events:auto;padding:1em;z-index:8}
+  .box{position:relative;width:min(94%,860px);max-height:94%;overflow:auto;padding:1.3em 1.5em;text-align:center;
+    overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+    border:2px solid var(--gold);border-radius:4px;outline:1px solid rgba(232,200,119,.3);outline-offset:-8px;
+    background:radial-gradient(ellipse at 50% -12%,rgba(138,99,210,.5),transparent 62%),
+               linear-gradient(180deg,#182452 0%,#0e183e 55%,#090f2c 100%);
+    box-shadow:0 0 0 5px #070b1c,0 0 45px rgba(138,99,210,.55),inset 0 0 45px rgba(111,208,232,.09)}
+  .diamond{position:absolute;width:9px;height:9px;background:var(--gold);transform:rotate(45deg);
+    box-shadow:0 0 12px var(--gold);pointer-events:none}
+  .diamond.tl{left:5px;top:5px}.diamond.tr{right:5px;top:5px}
+  .diamond.bl{left:5px;bottom:5px}.diamond.br{right:5px;bottom:5px}
+  h1{margin:.1em 0 .05em;font-size:1.8em;letter-spacing:.14em;
+    background:linear-gradient(180deg,#fff8e0,#e8c877 52%,#b4873a);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 2px 0 #2a1a44) drop-shadow(0 0 14px rgba(232,200,119,.65))}
+  h1 span{display:block;font-size:.34em;letter-spacing:.42em;margin-top:.7em;color:var(--cyan);
+    -webkit-text-fill-color:var(--cyan);filter:none}
+  .title-rule{display:flex;align-items:center;justify-content:center;gap:.9em;
+    color:var(--gold);font-size:.78em;margin:.25em 0 .8em;letter-spacing:.3em}
+  .title-rule::before,.title-rule::after{content:"";width:4em;height:1px}
+  .title-rule::before{background:linear-gradient(90deg,transparent,var(--gold))}
+  .title-rule::after{background:linear-gradient(90deg,var(--gold),transparent)}
+  #pbody p{margin:.35em 0;color:#c3ccec;line-height:1.5}
+  #pbody b{color:var(--gold2);font-size:1.1em}
+  #pbody .keys{color:var(--star);background:rgba(16,28,70,.8);border:1px solid rgba(111,208,232,.35);
+    border-left:3px solid var(--cyan);padding:.5em .8em;text-align:left;text-shadow:1px 1px 0 #05081a;line-height:1.6}
+  #pbody .dim{color:#8b96c4;font-size:.86em;line-height:1.6}
+  #goldline{color:var(--gold2);letter-spacing:.14em;margin:.2em 0 .7em;font-size:1.05em}
+  #goldline b{font-size:1.25em}
+  #pcards{display:flex;gap:.6em;justify-content:center;flex-wrap:wrap;margin:.7em 0}
+  .card{pointer-events:auto;cursor:pointer;position:relative;width:9.4em;min-height:7.2em;
+    font-family:inherit;font-size:.82em;color:var(--star);text-align:center;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2em;
+    padding:.7em .4em .6em;border:1px solid rgba(232,200,119,.55);border-radius:3px;
+    background:linear-gradient(180deg,#1b2a63,#111a44 60%,#0c1434);
+    box-shadow:inset 0 0 20px rgba(138,99,210,.24),0 3px 0 #05081a;
+    transition:transform .1s,border-color .1s,box-shadow .1s}
+  .card::before{content:"";position:absolute;inset:3px;border:1px solid rgba(111,208,232,.16);pointer-events:none}
+  .card:hover{transform:translateY(-4px);border-color:var(--gold);
+    box-shadow:0 0 22px rgba(232,200,119,.42),inset 0 0 22px rgba(138,99,210,.4),0 3px 0 #05081a}
+  .card.disabled{opacity:.42;filter:grayscale(.6);cursor:not-allowed;transform:none}
+  .card .rare{position:absolute;top:-.7em;left:50%;transform:translateX(-50%);
+    font-size:.64em;letter-spacing:.1em;padding:.06em .6em;white-space:nowrap;
+    color:var(--gold2);background:linear-gradient(90deg,#3a2a6a,#5b46a8);
+    border:1px solid var(--gold);box-shadow:0 0 10px rgba(232,200,119,.35)}
+  .card .sw{display:block;width:1.5em;height:1.5em;transform:rotate(45deg);
+    border:1px solid var(--gold2);box-shadow:0 0 14px currentColor;margin-bottom:.15em}
+  .card b{font-size:1.05em;color:#fff8e0}
+  .card small{font-size:.68em;letter-spacing:.12em;color:var(--cyan)}
+  .card em{font-style:normal;color:#a9b4dc;font-size:.84em;line-height:1.35}
+  .card .price{color:var(--gold2);font-size:.92em;letter-spacing:.05em}
+  #pbtn{pointer-events:auto;cursor:pointer;font-family:inherit;font-size:1.02em;letter-spacing:.2em;
+    padding:.6em 2.1em;border:1px solid var(--gold);border-radius:3px;color:var(--gold2);
+    background:linear-gradient(180deg,#6b52b8,#3a2a75);box-shadow:0 3px 0 #1a1240,0 0 24px rgba(138,99,210,.5);
+    text-shadow:1px 1px 0 #1a1240;transition:transform .08s,background .08s;flex-shrink:0}
+  #pbtn:hover{background:linear-gradient(180deg,#8a63d2,#4a3690)}
+  #pbtn:active{transform:translateY(2px)}
+  /* 标题页「继续游戏 / 新游戏」双选项卡片 */
+  #panel.save-choice .box{padding:1em 1.3em}
+  .card.choice{width:13em;min-height:7.6em;font-size:.98em;padding:.85em .6em .7em}
+  .card.choice .rare{font-size:.7em;letter-spacing:.14em;top:-.85em}
+  .card.choice b{font-size:1.2em}
+  .card.choice small{font-size:.78em}
+  .card.choice em{font-size:.95em;line-height:1.45}
+  .card.choice .price{font-size:.95em}
+  /* 全屏能力选择：面板铺满整个界面，游戏暂停 */
+  #panel.choose{background:rgba(4,8,22,.965)}
+  #panel.choose .box{width:96%;height:94%;max-height:94%;
+    display:flex;flex-direction:column;justify-content:center}
+  #panel.choose #pcards{flex:1;align-content:center;align-items:center;gap:1.1em}
+  #panel.choose .card{width:14em;min-height:9.6em;font-size:1.05em}
+  #panel.choose h1{font-size:2.1em}
+  /* 矮屏(手机横屏)回收卡片尺寸，避免三卡溢出 */
+  @media (max-height:440px){
+    #panel.choose .card{width:11.6em;min-height:7.4em;font-size:.9em}
+    #panel.choose #pcards{gap:.65em}
+    #stage.modal #toast{display:none}          /* 矮屏让位，避免提示条压住说明文字 */
+    #panel.choose #pbody .dim{line-height:1.4}
+    #panel.choose #pbtn{padding:.5em 1.6em;letter-spacing:.12em}
+    /* 标题双选项在矮屏压缩，保证两张卡完整可见、无需滚动 */
+    #panel.save-choice .box{padding:.55em 1em}
+    #panel.save-choice h1{font-size:1.45em}
+    #panel.save-choice .title-rule{margin:.12em 0 .3em;font-size:.68em}
+    #panel.save-choice #pbody p{margin:.16em 0}
+    #panel.save-choice #pbody .dim{font-size:.8em;line-height:1.32}
+    #panel.save-choice #pbody .keys{font-size:.85em;padding:.3em .6em;line-height:1.4}
+    #panel.save-choice #goldline{margin:.15em 0 .3em;font-size:.9em}
+    #panel.save-choice #pcards{margin:.3em 0;gap:.8em}
+    .card.choice{width:11em;min-height:5.4em;font-size:.82em;padding:.45em .35em}
+    .card.choice em{font-size:.88em;line-height:1.28}
+  }
+
+  /* ===== 手机横屏触控 ===== */
+  #stage.modal #touch,#stage.modal #toolbar{opacity:0;pointer-events:none}
+  #touch{position:absolute;inset:0;z-index:6;pointer-events:none;touch-action:none;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+  #touch.off{display:none}
+  #stickZone{position:absolute;left:env(safe-area-inset-left,0px);top:0;width:46%;height:100%;
+    pointer-events:auto;touch-action:none}
+  #stickBase{position:absolute;width:25vmin;height:25vmin;left:13vmin;top:55%;
+    margin:-12.5vmin 0 0 -12.5vmin;border-radius:50%;opacity:.34;transition:opacity .12s;
+    background:radial-gradient(circle,rgba(16,28,70,.55) 52%,rgba(7,11,28,.78) 100%);
+    border:2px solid rgba(232,200,119,.6);
+    box-shadow:0 0 0 3px rgba(7,11,28,.6),0 0 18px rgba(111,208,232,.3),inset 0 0 18px rgba(91,70,168,.5)}
+  #stickBase.on{opacity:.95;border-color:var(--gold2)}
+  #stickBase::before,#stickBase::after{content:"";position:absolute;background:rgba(232,200,119,.28);pointer-events:none}
+  #stickBase::before{left:50%;top:9%;bottom:9%;width:1px;transform:translateX(-50%)}
+  #stickBase::after{top:50%;left:9%;right:9%;height:1px;transform:translateY(-50%)}
+  #stickKnob{position:absolute;left:50%;top:50%;width:10vmin;height:10vmin;margin:-5vmin 0 0 -5vmin;
+    border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle at 36% 30%,#c9d2c2,#7b8578 46%,#20242f 78%,#05070f 100%);
+    border:2px solid var(--gold2);box-shadow:0 0 14px rgba(111,208,232,.75),0 2px 0 #05081a}
+  #actions{position:absolute;right:calc(1.5vmin + env(safe-area-inset-right,0px));
+    bottom:calc(1.5vmin + env(safe-area-inset-bottom,0px));
+    width:41vmin;height:41vmin;pointer-events:none}
+  .abtn{position:absolute;pointer-events:auto;touch-action:none;border-radius:50%;padding:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+    font-family:inherit;color:var(--gold2);text-align:center;line-height:1.12;
+    background:radial-gradient(circle at 38% 28%,rgba(43,47,112,.94),rgba(11,20,54,.94) 72%);
+    border:2px solid rgba(232,200,119,.78);
+    box-shadow:0 0 0 3px rgba(7,11,28,.72),0 0 16px rgba(111,208,232,.32),inset 0 0 14px rgba(138,99,210,.45);
+    text-shadow:1px 1px 0 #05081a;transition:transform .07s,border-color .07s,box-shadow .07s,filter .07s}
+  .abtn .ico{font-size:clamp(15px,4.4vmin,30px);line-height:1.05;color:var(--cyan)}
+  .abtn b{font-size:clamp(9px,2.15vmin,15px);letter-spacing:.06em;font-weight:700}
+  .abtn small{font-size:clamp(7px,1.65vmin,11px);letter-spacing:.08em;color:#8fa6d8}
+  .abtn.hit{transform:scale(.9);border-color:#fff6d8;filter:brightness(1.25)}
+  #bAtk{right:0;bottom:0;width:17vmin;height:17vmin;border-color:#f7e6b0;
+    background:radial-gradient(circle at 38% 28%,rgba(138,99,210,.96),rgba(26,18,70,.96) 72%)}
+  #bAtk .ico{font-size:clamp(20px,6vmin,40px);color:var(--gold2)}
+  #toolbar{position:absolute;top:calc(.6vmin + env(safe-area-inset-top,0px));left:50%;
+    transform:translateX(-50%);display:flex;gap:.6vmin;z-index:7;pointer-events:auto}
+  .tbtn{pointer-events:auto;touch-action:none;font-family:inherit;
+    font-size:clamp(9px,1.95vmin,13px);padding:.5em .8em;min-height:3.6vmin;
+    color:var(--cyan);letter-spacing:.08em;background:rgba(11,20,54,.84);
+    border:1px solid rgba(111,208,232,.55);border-radius:2px;box-shadow:0 0 0 2px rgba(7,11,28,.6)}
+  .tbtn.on{color:var(--gold2);border-color:var(--gold)}
+  #rotate{display:none}
+  @media (orientation:portrait) and (pointer:coarse){
+    #rotate{display:flex;position:fixed;inset:0;z-index:99;align-items:center;justify-content:center;
+      flex-direction:column;gap:1.1em;background:#070b1c;text-align:center;color:var(--gold2)}
+    #rotate .ph{font-size:16vmin;line-height:1}
+    #rotate b{font-size:3.4vmin;letter-spacing:.22em}
+    #rotate small{font-size:2.4vmin;color:var(--cyan);letter-spacing:.14em}
+  }
+  @media (pointer:coarse){
+    #hint{display:none}
+    #pbtn{min-height:44px;padding:.8em 2em}
+    .card{min-height:44px}
+  }
+</style>
+<script data-page-node-id="OHzoCY4NzfhymtbKkoXV0x" data-pnid-children="65WFz1Vn5dGBwxnM9ePMqA">
+/* ===== 独立打开：在预览框/阅读器里缩放由外层容器控制，页内拦不住，提供一键逃逸 ===== */
+(function(){
+  function framed(){try{return window.self!==window.top;}catch(e){return true;}}
+  function init(){
+    if(!framed()||document.getElementById('extLink'))return;
+    var a=document.createElement('a');
+    a.id='extLink';a.href=location.href;a.target='_blank';a.rel='noopener';
+    a.textContent='\u2922 \u5728\u72ec\u7acb\u9875\u9762\u6253\u5f00\uff08\u9501\u5b9a\u7f29\u653e\uff09';
+    a.style.cssText='position:absolute;left:50%;top:calc(8px + env(safe-area-inset-top,0px));'
+      +'transform:translateX(-50%);z-index:70;display:inline-flex;align-items:center;padding:6px 14px;'
+      +'border-radius:999px;font-size:12px;letter-spacing:.06em;color:#141a33;'
+      +'background:linear-gradient(180deg,#f7e6b0,#e8c877);border:1px solid #fff6d8;text-decoration:none;'
+      +'pointer-events:auto;touch-action:none;white-space:nowrap;box-shadow:0 3px 14px rgba(0,0,0,.55);'
+      +'font-family:inherit';
+    (document.getElementById('wrap')||document.body).appendChild(a);
+    a.addEventListener('click',function(ev){
+      ev.preventDefault();
+      var w=null;try{w=window.open(location.href,'_blank','noopener');}catch(e){}
+      if(!w)a.textContent='\u8bf7\u70b9\u53f3\u4e0a\u89d2\u300c\u5728\u6d4f\u89c8\u5668\u4e2d\u6253\u5f00\u300d';
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+/* ===== 界面锁定：整页固定一屏，标题/选卡/游戏中任何阶段都不允许缩放 ===== */
+(function(){
+  var d=document,w=window,cap={passive:false,capture:true};
+  /* 1) 捕获阶段拦截：注册在最外层，游戏里任何 stopPropagation 都拦不住它 */
+  function two(e){if(e.touches&&e.touches.length>1&&e.cancelable)e.preventDefault();}
+  ['touchstart','touchmove'].forEach(function(n){
+    w.addEventListener(n,two,cap);d.addEventListener(n,two,cap);
+  });
+  ['gesturestart','gesturechange','gestureend'].forEach(function(n){
+    var f=function(e){e.preventDefault();};
+    w.addEventListener(n,f,cap);d.addEventListener(n,f,cap);
+  });
+  w.addEventListener('wheel',function(e){if(e.ctrlKey)e.preventDefault();},cap);
+  w.addEventListener('dblclick',function(e){e.preventDefault();},cap);
+  /* 2) 兜底：部分安卓 WebView / 微信内核会无视 meta 与 touch-action 强制缩放。
+        一旦真的缩放了，就反向抵消，画面在视觉上保持不动、也无法放大。 */
+  var vv=w.visualViewport,wrap=null,lk={s:1,x:0,y:0};
+  function pin(){
+    if(!vv)return;
+    var s=vv.scale||1,x=vv.offsetLeft||0,y=vv.offsetTop||0;
+    if(Math.abs(s-lk.s)<0.004&&Math.abs(x-lk.x)<0.5&&Math.abs(y-lk.y)<0.5)return;
+    lk.s=s;lk.x=x;lk.y=y;
+    if(!wrap)wrap=d.getElementById('wrap');
+    if(!wrap)return;
+    if(s>1.008){
+      wrap.style.transformOrigin='0 0';
+      wrap.style.transform='translate('+x+'px,'+y+'px) scale('+(1/s).toFixed(4)+')';
+    }else if(wrap.style.transform){
+      wrap.style.transform='';wrap.style.transformOrigin='';
+    }
+  }
+  if(vv){vv.addEventListener('resize',pin);vv.addEventListener('scroll',pin);}
+})();
+</script>
+</head>
+<body data-page-node-id="8rPI7IFG6YhCBjcu2GuOCV">
+<div data-page-node-id="mWrOyCFLe6waG81HkhnEbj" id="wrap"><div data-page-node-id="NyfNGQJPlO7IlyDLchnCGg" id="stage">
+  <canvas data-page-node-id="tZAEEGGoP6ZlOWwOtjvQL1" height="270" id="game" width="480"></canvas>
+  <div data-page-node-id="1tvKrUtjF5oIjjU0Geaxqq" id="ui">
+    <div data-page-node-id="tMFmy1H4icjeTIjwoRm431" data-kind="notice" id="toast"></div>
+    <div data-page-node-id="ONKmNjaxPRtp8sJEoj2RSo" id="hint"><!--pnid:FkufeNigZCoaZRHmyMVxs7-->WASD 移动 · J/空格 星环普攻 · P 暂停 · F1 碰撞盒 ｜ 手机横屏：左轮盘 + 右侧唯一普攻按钮，能力全自动</div>
+    <div data-page-node-id="1ePNjnTar72SvGeqtcWFaM" class="hidden" id="pause"><!--pnid:xShy1m0C3eTiSku9cHbWQy-->PAUSED</div>
+    <div data-page-node-id="6bB2lvB1h75ci2ZdtT0amK" class="hidden" id="panel"><div data-page-node-id="1hqNp2b0lf2BU2zpmw2wf7" class="box">
+      <i data-page-node-id="TLXjQ6BwTR3gwjMKaRcDA2" class="diamond tl"></i><i data-page-node-id="zjUkjgK7Kv9TXo0m9dIeD7" class="diamond tr"></i><i data-page-node-id="ChRclAwo4iIAnYOzwA7a4d" class="diamond bl"></i><i data-page-node-id="QeoNTW2nZWFASieWiJRwiR" class="diamond br"></i>
+      <h1 data-page-node-id="4IMatyzUUj4wNn5lLx56rQ" id="ptitle"></h1>
+      <div data-page-node-id="OrhoJ9bVdG6bhAZMVKuGiW" class="title-rule" id="prule"><!--pnid:JhNTg5Zb89zHV6M5klsUaj-->✦</div>
+      <div data-page-node-id="NAfVch943gDvbGoMuC8YXf" id="pbody"></div>
+      <div data-page-node-id="6f56SDVe2tX0N0GKAD5e27" id="goldline"></div>
+      <div data-page-node-id="2GsFq12HKjL5kQ5c9Au29u" id="pcards"></div>
+      <button data-page-node-id="oul1QhabQ0ernwyCHbiyha" id="pbtn"></button>
+    </div></div>
+  </div>
+  <div data-page-node-id="hAWcqn2kuZ0xJ4AKl20EJL" id="touch">
+    <div data-page-node-id="zKnL2lnTxiyvrFXnazUTjY" id="stickZone"><div data-page-node-id="Q4wWO913guFgSmKBXdbEkf" id="stickBase"><div data-page-node-id="N5G3OtG6xWhKx0cBKlnJ23" id="stickKnob"></div></div></div>
+    <div data-page-node-id="JdqwXYoOjMpt1bS98B5z2H" id="actions">
+      <button data-page-node-id="sa9AXDKOI81fgAwqTiQGJX" class="abtn" id="bAtk"><span data-page-node-id="1ARaxSBlnnvQvZyLOxZUS5" class="ico"><!--pnid:EMQq0uqgKdexiKlxQHY2Wo-->✦</span><b data-page-node-id="7wO42shglIJetlZFDh7USq"><!--pnid:S2kvnZH2pIklYrWeMjPcc9-->星环</b><small data-page-node-id="2VPWaLPdr0K8o83rhfDoef"><!--pnid:hijDCNJmlLE0g9XEi25CRC-->ATTACK</small></button>
+    </div>
+  </div>
+  <div data-page-node-id="acH0ijs1B6KuQBH8Am9YkF" id="toolbar">
+    <button data-page-node-id="pbvzejIsuq8U1ocxM4WwTt" class="tbtn on" id="tbTouch"><!--pnid:cXaWAskAcZpuO3H4fbSPGF-->触屏 ON</button>
+    <button data-page-node-id="71OTgDwwgO0ji7OMGh6SzJ" class="tbtn" id="tbFull"><!--pnid:V8myxgSMdIccX5R9CTJwJ1-->全屏</button>
+    <button data-page-node-id="INOqgupfgmNA7041uYyrKP" class="tbtn" id="tbPause"><!--pnid:zbt0cxW3lxs7irebmtBtwC-->暂停</button>
+  </div>
+</div></div>
+<div data-page-node-id="fL1jgqblhu8yc2EMfvMKXk" id="rotate"><div data-page-node-id="rn8yA3hbFsAw2Mzg1CIjmY" class="ph"><!--pnid:nWrkPAUSDDyrldwUgRdhor-->⟳</div><b data-page-node-id="YTXysRJqeJib2dlLBrdfki"><!--pnid:aMyYetnAVWjWPUv4LHOyVY-->请横屏游玩</b><small data-page-node-id="rBUgEdiYRfICJYg2h1wwm2"><!--pnid:o9MTI9ayH1lBLiuPIOj8Hd-->ROTATE TO LANDSCAPE</small></div>
+<script data-page-node-id="CbPvU0wqHPJC6xTDESHoO9" data-pnid-children="Rl99ZRSKmra7XybkfaeILi">
+'use strict';
+/* =========================================================================
+   暗星之球 UMBRA ORB · 无限星潮 INFINITE WAVES
+   单文件 / 零素材 / 全程序化像素。黑球是唯一动作源。
+   固定竞技场 + 无限波次 + 金币商店 + 5 能力 × 10 阶进化 + 护盾叠加
+   + 怪物掉落星辉宝匣(靠近自动开启) + 每 10 波超级大 Boss 独立登场。
+   5 种被动能力全部自动释放；主动技能由星能充满自动施放(过几秒一次)，无需按钮。
+   纯 2D 平面：只有上下左右，没有跳跃 / 滑铲 / 交互键；左轮盘，右侧仅 1 个普通攻击按钮。
+   ========================================================================= */
+
+/* ---------- 1. 常量与工具 ---------- */
+let VW=480;const VH=270,TILE=16,AW=72,AH=44;
+const ARENA_W=AW*TILE,ARENA_H=AH*TILE;
+const cv=document.getElementById('game'),ctx=cv.getContext('2d');
+ctx.imageSmoothingEnabled=false;
+let rng=Math.random;
+function makeRng(s){let a=s>>>0;const f=function(){a=(a+0x6D2B79F5)>>>0;
+  let t=Math.imul(a^(a>>>15),1|a);t^=t+Math.imul(t^(t>>>7),61|t);
+  return ((t^(t>>>14))>>>0)/4294967296;};
+  f.getState=()=>a;f.setState=v=>{a=v>>>0;};return f;}   /* 存档可保存/恢复随机序列 */
+const R=()=>rng();
+const RI=(a,b)=>a+Math.floor(R()*(b-a+1));
+const pick=a=>a[Math.floor(R()*a.length)];
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+function hash2(x,y){let h=(x*374761393+y*668265263)^0x5f3759df;
+  h=Math.imul(h^(h>>>13),1274126177);return ((h^(h>>>16))>>>0)/4294967296;}
+function vnoise(n){const s=Math.sin(n*12.9898)*43758.5453;return s-Math.floor(s);}
+
+/* ---------- 2. 像素精灵 / 黑球 ---------- */
+const SPRITES={
+  core:['..11..','.1221.','122221','122221','.1221.','..11..'],
+  coin:['.1111.','122221','121121','121121','122221','.1111.'],
+  chest:['.111111.','12222221','12333321','12222221','12111121','12222221','.111111.'],
+  gem:['..11..','.1221.','122221','.1221.','..11..'],
+  crystal:['..1..','.121.','12321','.121.','..1..'],
+  portal:['..1111..','.122221.','12333321','12211221','12333321','.122221.','..1111..']
+};
+const PAL={'1':'#e8c877','2':'#f7e6b0','3':'#6fd0e8','4':'#d96a7a','5':'#8a63d2'};
+const spriteCache={};
+function buildSprite(rows){
+  const w=rows[0].length,h=rows.length,c=document.createElement('canvas');
+  c.width=w;c.height=h;const g=c.getContext('2d');
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const ch=rows[y][x];if(ch==='.'||ch===' ')continue;
+    g.fillStyle=PAL[ch]||'#ffffff';g.fillRect(x,y,1,1);}
+  return c;
+}
+function getSpr(n){if(!spriteCache[n])spriteCache[n]=buildSprite(SPRITES[n]);return spriteCache[n];}
+function drawSpr(name,x,y,flip,scale,tint){
+  const s=getSpr(name),w=s.width*(scale||1),h=s.height*(scale||1);
+  const dx=Math.round(x-w/2),dy=Math.round(y-h/2);
+  if(tint){const c=document.createElement('canvas');c.width=s.width;c.height=s.height;
+    const g=c.getContext('2d');g.drawImage(s,0,0);g.globalCompositeOperation='source-in';
+    g.fillStyle=tint;g.fillRect(0,0,s.width,s.height);
+    ctx.drawImage(c,dx,dy,w,h);}
+  else ctx.drawImage(s,dx,dy,w,h);
+}
+function pixelOrb(x,y,r,o){
+  const cx=Math.round(x),cy=Math.round(y),rr=Math.max(2,Math.round(r));
+  const sx=o.sx||1,sy=o.sy||1,roll=o.roll||0,ca=Math.cos(roll),sa=Math.sin(roll);
+  for(let dy=-rr;dy<=rr;dy++)for(let dx=-rr;dx<=rr;dx++){
+    const nx=dx/sx,ny=dy/sy,d2=nx*nx+ny*ny;
+    if(d2>rr*rr)continue;
+    let col;
+    if(d2>(rr-1.3)*(rr-1.3))col=o.edge;
+    else{const t=ny*ca-nx*sa;col=t< -rr*.10?o.lit:(t<rr*.04?o.mid:o.dark);}
+    ctx.fillStyle=col;ctx.fillRect(cx+dx,cy+dy,1,1);
+  }
+  if(o.spec){ctx.fillStyle=o.spec;ctx.fillRect(cx-Math.round(rr*.5),cy-Math.round(rr*.55),2,1);}
+  if(o.glow){ctx.globalAlpha=o.glow;ctx.fillStyle=o.glowCol||'#6fd0e8';
+    for(let i=0;i<12;i++){const a=i*Math.PI/6+(o.spin||0);
+      ctx.fillRect(Math.round(cx+Math.cos(a)*(rr+2)),Math.round(cy+Math.sin(a)*(rr+2)),1,1);}
+    ctx.globalAlpha=1;}
+}
+function orbShadow(x,y,r){
+  const w=Math.max(3,Math.round(r*1.7));ctx.fillStyle='#080d22';
+  for(let i=0;i<2;i++){const ww=Math.max(2,w-i*4);
+    ctx.fillRect(Math.round(x-ww/2-1),Math.round(y+r+1+i),ww,1);}
+}
+const BALL={lit:'#c9d2c2',mid:'#7b8578',dark:'#20242f',edge:'#05070f',spec:'#eef1ff'};
+const ORB_STYLE={
+  minion:{lit:'#a8e6c0',mid:'#3f8f78',dark:'#143c3a',edge:'#071a1c',glow:'#6fd0e8'},
+  elite:{lit:'#e6ecff',mid:'#8892b8',dark:'#2c3560',edge:'#0a0e22',glow:'#9fe4f2'},
+  miniboss:{lit:'#d9b6f7',mid:'#8a63d2',dark:'#382268',edge:'#120a28',glow:'#c9a6ff'},
+  leader:{lit:'#ffe9a8',mid:'#d8a04a',dark:'#6a4416',edge:'#201206',glow:'#f7e6b0'},
+  boss:{lit:'#ffd9a8',mid:'#c0605a',dark:'#541a30',edge:'#1a0810',glow:'#f7e6b0'},
+  mega:{lit:'#ffe6f0',mid:'#c04a86',dark:'#3a0a3c',edge:'#12001c',glow:'#ff8ec7'}
+};
+
+/* ---------- 3. 星环（所有释放/触发的统一载体） ---------- */
+let rings=[];
+function spawnRing(x,y,o){
+  rings.push({x,y,r0:o.r0||6,r1:o.r1||26,life:o.life||.26,max:o.life||.26,
+    col:o.col||'#e8c877',col2:o.col2||'#6fd0e8',
+    arc:o.arc===undefined?Math.PI*2:o.arc,face:o.face||0,
+    n:o.n||18,spin:o.spin||0,sy:o.sy||.82});
+  if(rings.length>60)rings.shift();
+}
+function updateRings(dt){for(const q of rings)q.life-=dt;rings=rings.filter(q=>q.life>0);}
+function drawRings(){
+  for(const q of rings){
+    const t=clamp(1-q.life/q.max,0,1),rr=q.r0+(q.r1-q.r0)*t;
+    ctx.globalAlpha=clamp(1-t*.85,0,1);
+    for(let i=0;i<q.n;i++){
+      const a=q.arc>=Math.PI*2-0.01?(i/q.n)*Math.PI*2:q.face-q.arc/2+(i/Math.max(1,q.n-1))*q.arc;
+      const ang=a+q.spin*t,px=q.x+Math.cos(ang)*rr,py=q.y+Math.sin(ang)*rr*q.sy;
+      ctx.fillStyle=(i%3===0)?q.col2:q.col;const s=(i%5===0)?2:1;
+      ctx.fillRect(Math.round(px),Math.round(py),s,s);
+    }
+    ctx.globalAlpha=1;
+  }
+}
+
+/* ---------- 4. 5×7 点阵字体 ---------- */
+const FONT={
+ "0":"01110/10001/10011/10101/11001/10001/01110","1":"00100/01100/00100/00100/00100/00100/01110",
+ "2":"01110/10001/00001/00010/00100/01000/11111","3":"11110/00001/00001/01110/00001/00001/11110",
+ "4":"00010/00110/01010/10010/11111/00010/00010","5":"11111/10000/11110/00001/00001/10001/01110",
+ "6":"00110/01000/10000/11110/10001/10001/01110","7":"11111/00001/00010/00100/01000/01000/01000",
+ "8":"01110/10001/10001/01110/10001/10001/01110","9":"01110/10001/10001/01111/00001/00010/01100",
+ "A":"01110/10001/10001/11111/10001/10001/10001","B":"11110/10001/10001/11110/10001/10001/11110",
+ "C":"01110/10001/10000/10000/10000/10001/01110","D":"11110/10001/10001/10001/10001/10001/11110",
+ "E":"11111/10000/10000/11110/10000/10000/11111","F":"11111/10000/10000/11110/10000/10000/10000",
+ "G":"01110/10001/10000/10111/10001/10001/01110","H":"10001/10001/10001/11111/10001/10001/10001",
+ "I":"01110/00100/00100/00100/00100/00100/01110","J":"00111/00010/00010/00010/00010/10010/01100",
+ "K":"10001/10010/10100/11000/10100/10010/10001","L":"10000/10000/10000/10000/10000/10000/11111",
+ "M":"10001/11011/10101/10101/10001/10001/10001","N":"10001/11001/10101/10011/10001/10001/10001",
+ "O":"01110/10001/10001/10001/10001/10001/01110","P":"11110/10001/10001/11110/10000/10000/10000",
+ "Q":"01110/10001/10001/10001/10101/10010/01101","R":"11110/10001/10001/11110/10100/10010/10001",
+ "S":"01111/10000/10000/01110/00001/00001/11110","T":"11111/00100/00100/00100/00100/00100/00100",
+ "U":"10001/10001/10001/10001/10001/10001/01110","V":"10001/10001/10001/10001/10001/01010/00100",
+ "W":"10001/10001/10001/10101/10101/10101/01010","X":"10001/10001/01010/00100/01010/10001/10001",
+ "Y":"10001/10001/01010/00100/00100/00100/00100","Z":"11111/00001/00010/00100/01000/10000/11111",
+ " ":"00000/00000/00000/00000/00000/00000/00000",":":"00000/00100/00100/00000/00100/00100/00000",
+ "+":"00000/00100/00100/11111/00100/00100/00000","-":"00000/00000/00000/11111/00000/00000/00000",
+ ".":"00000/00000/00000/00000/00000/00100/00100","!":"00100/00100/00100/00100/00100/00000/00100",
+ "/":"00001/00001/00010/00100/01000/10000/10000","%":"11001/11010/00010/00100/01000/01011/10011",
+ "?":"01110/10001/00001/00010/00100/00000/00100","(":"00010/00100/01000/01000/01000/00100/00010",
+ ")":"01000/00100/00010/00010/00010/00100/01000","*":"00000/10101/01110/11111/01110/10101/00000",
+ "=":"00000/00000/11111/00000/11111/00000/00000",">":"01000/00100/00010/00001/00010/00100/01000",
+ "<":"00010/00100/01000/10000/01000/00100/00010","#":"01010/11111/01010/01010/01010/11111/01010",
+ ",":"00000/00000/00000/00000/00100/00100/01000","'":"00100/00100/00000/00000/00000/00000/00000"
+};
+function drawText(s,x,y,col,scale,align){
+  scale=scale||1;s=String(s).toUpperCase();
+  const w=s.length*6*scale;
+  x=Math.round(x+(align==='center'?-w/2:align==='right'?-w:0));y=Math.round(y);
+  ctx.fillStyle=col||'#eef1ff';
+  for(let i=0;i<s.length;i++){
+    const g=FONT[s[i]];if(!g)continue;
+    const rows=g.split('/');
+    for(let r=0;r<rows.length;r++)for(let c=0;c<rows[r].length;c++)
+      if(rows[r][c]==='1')ctx.fillRect(x+(i*6+c)*scale,y+r*scale,scale,scale);
+  }
+}
+
+/* ---------- 5. WebAudio 现场合成 ---------- */
+let AC=null;
+function actx(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+  if(AC&&AC.state==='suspended')AC.resume();return AC;}
+function sfx(t){
+  const a=actx();if(!a)return;
+  let f0=440,f1=180,dur=.08,vol=.05,type='square';
+  switch(t){
+    case 'charge':f0=260;f1=760;dur=.11;vol=.028;break;
+    case 'swing':f0=760;f1=180;dur=.1;vol=.035;break;
+    case 'hit':f0=240;f1=60;dur=.07;vol=.07;type='sawtooth';break;
+    case 'crit':f0=920;f1=220;dur=.13;vol=.08;break;
+    case 'hurt':f0=190;f1=55;dur=.22;vol=.09;type='sawtooth';break;
+    case 'die':f0=300;f1=40;dur=.3;vol=.07;break;
+    case 'pick':f0=700;f1=1250;dur=.1;vol=.045;break;
+    case 'dash':f0=320;f1=980;dur=.12;vol=.035;break;
+    case 'nova':f0=120;f1=1400;dur=.42;vol=.085;type='sawtooth';break;
+    case 'shoot':f0=620;f1=280;dur=.08;vol=.035;break;
+    case 'clear':f0=520;f1=1050;dur=.26;vol=.05;break;
+    case 'seal':f0=140;f1=90;dur=.16;vol=.05;break;
+    case 'shield':f0=980;f1=420;dur=.18;vol=.06;break;
+    case 'meteor':f0=90;f1=520;dur=.35;vol=.08;type='sawtooth';break;
+    case 'buy':f0=560;f1=1120;dur=.16;vol=.05;break;
+  }
+  try{const n=a.currentTime,o=a.createOscillator(),g=a.createGain();
+    o.type=type;o.frequency.setValueAtTime(f0,n);
+    o.frequency.exponentialRampToValueAtTime(Math.max(20,f1),n+dur);
+    g.gain.setValueAtTime(vol,n);g.gain.exponentialRampToValueAtTime(.0001,n+dur);
+    o.connect(g);g.connect(a.destination);o.start(n);o.stop(n+dur+.02);}catch(e){}
+}
+
+/* ---------- 6. 全局状态 ---------- */
+let G={phase:'title',paused:false,wave:1,kills:0,gold:0,spentGold:0,time:0,seed:0,
+  waveSpawned:0,waveQuota:0,spawnT:0,chestTimer:10,mega:null,current:null,dropPity:0,
+  bought:{heal:0,hp:0,dmg:0,spd:0,shield:0}};
+let grid;
+
+/* ---------- 6b. 本机存档：每波开始时自动记录，重开链接可选继续 / 新游戏 ---------- */
+const SAVE_KEY='umbraSave',SAVE_VER=1;
+function pad2(n){return String(n).padStart(2,'0');}
+function saveGame(){
+  if(G.phase!=='fight'||!P||P.dead)return;
+  try{
+    localStorage.setItem(SAVE_KEY,JSON.stringify({
+      v:SAVE_VER,wave:G.wave,kills:G.kills,gold:G.gold,spentGold:G.spentGold,
+      time:G.time,seed:G.seed,dropPity:G.dropPity,current:G.current,
+      rngState:(rng&&typeof rng.getState==='function')?rng.getState():null,
+      bought:G.bought,abil:abil,
+      hp:P.hp,maxHp:P.maxHp,shield:P.shield,bonus:P.bonus,
+      savedAt:Date.now()
+    }));
+  }catch(err){}   /* 隐私模式 / 存储被禁用时静默降级，游戏照常可玩 */
+}
+function loadSave(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);if(!raw)return null;
+    const d=JSON.parse(raw);
+    if(!d||d.v!==SAVE_VER||!Number.isFinite(d.wave)||d.wave<1||d.wave>99999)return null;
+    return d;
+  }catch(err){return null;}
+}
+function clearSave(){try{localStorage.removeItem(SAVE_KEY);}catch(err){}}
+let P=null,enemies=[],bullets=[],chests=[],parts=[],floats=[],warnings=[],pickups=[];
+let cam={x:0,y:0},shake=0,hitstop=0,flash=0,toastT=0,debug=false,frame=0;
+let keys={},pressed={},atkBuffer=0;
+let mouse={down:false,x:VW/2,y:VH/2,aim:false};
+let stick={x:0,y:0,id:-1,cx:0,cy:0,max:30},touchAtk=false,touchUI=true;
+let abil={aim:0,ring:0,pierce:0,twin:0,meteor:0};
+let orbitA=0,meteorT=3,aimTarget=null,ringHits=[];
+const SKILL_COST=30,MP_REGEN=7,SKILL_CD=.7;    /* 星能自动充满 30 点即自动施放主动技能(约每 4.3s) */
+const MP_MAX=30;                                /* 蓝上限=一次释放消耗：充满即自动放并清零，蓝条即充能进度 */
+const AUTO_BASE={aim:3.2,pierce:3.6,twin:3.4};/* 被动能力自动施放基础间隔(秒)，随等级缩短但有下限 */
+
+/* ---------- 7. 数值平衡（玩家次线性 / 怪物超线性） ---------- */
+/* 6 档怪物金币：1 / 5 / 10 / 20 / 30 / 50，完全按需求 */
+const ETYPES={
+  minion:  {hp:9,  speed:44,r:6, dmg:1,gold:1, ranged:0},
+  elite:   {hp:28, speed:50,r:7, dmg:1,gold:5, ranged:0},
+  miniboss:{hp:85, speed:40,r:9, dmg:2,gold:10,ranged:1},
+  leader:  {hp:190,speed:46,r:10,dmg:2,gold:20,ranged:1},
+  boss:    {hp:400,speed:38,r:12,dmg:3,gold:30,ranged:2},
+  mega:    {hp:1700,speed:32,r:20,dmg:4,gold:50,ranged:2}
+};
+function hpK(w){return 1+.20*(w-1)+.010*(w-1)*(w-1);}
+function dmgK(w){return 1+.06*(w-1);}
+function spdK(w){return Math.min(1.7,1+.022*(w-1));}
+function waveQuota(w){return w%10===0?1:Math.min(10+3*w,46);}
+function pickType(w){
+  const t=R();
+  if(w>=8&&t<.025)return 'boss';
+  if(w>=5&&t<.075)return 'leader';
+  if(w>=3&&t<.17)return 'miniboss';
+  if(w>=2&&t<.38)return 'elite';
+  return 'minion';
+}
+/* 5 能力 × 10 阶：每阶小增、Lv4/7/10 质变；收益递减 + 价格递增防崩 */
+const ABILITIES=[
+  {k:'aim',   n:'星眼',   en:'STAR EYE',   c:'#6fd0e8',
+   d:'普通攻击自动锁定最近怪物，追加锁定伤害与暴击',
+   g:lv=>'锁定伤害 +'+(lv*.5).toFixed(1)+'  暴击 +'+(lv*1.5).toFixed(0)+'%'},
+  {k:'ring',  n:'星轨环', en:'ORBIT RING', c:'#8a63d2',
+   d:'黑球周围生成旋转星环，撞到怪物持续扣血',
+   g:lv=>'环数 '+ringCount(lv)+'  半径 '+(20+2*(lv-1))+'  伤害 '+(1.2+.55*(lv-1)).toFixed(1)},
+  {k:'pierce',n:'贯星',   en:'PIERCING',   c:'#f7e6b0',
+   d:'普通攻击追加贯穿星弹，可穿透多个怪物',
+   g:lv=>'穿透 '+pierceCount(lv)+'  弹数 '+pierceShots(lv)+'  射程 +'+(1.5*(lv-1)).toFixed(1)},
+  {k:'twin',  n:'双生星', en:'TWIN STRIKE',c:'#e879a8',
+   d:'普通攻击分裂成多道星弧，同时命中多次',
+   g:lv=>'额外 '+twinExtra(lv)+' 击  系数 '+(.6+.04*(lv-1)).toFixed(2)},
+  {k:'meteor',n:'陨星',   en:'METEOR',     c:'#d96a7a',
+   d:'黑球感应怪群，天降陨石在怪群中心炸开范围伤害',
+   g:lv=>'间隔 '+(4.2-.28*(lv-1)).toFixed(1)+'s  落点 '+meteorShots(lv)+'  伤害 '+(3+1.5*(lv-1)).toFixed(1)}
+];
+function ringCount(lv){return 1+Math.floor((lv-1)/3);}
+function pierceCount(lv){return 1+Math.floor((lv-1)/2);}
+function pierceShots(lv){return 1+(lv>=4?1:0)+(lv>=7?1:0);}
+function twinExtra(lv){return 1+(lv>=4?1:0)+(lv>=7?1:0);}
+function meteorShots(lv){return 1+(lv>=4?1:0)+(lv>=7?1:0)+(lv>=10?1:0);}
+const ABIL_COST=lv=>8+6*lv;
+const STATS=[
+  {k:'heal',  n:'星核治愈', en:'HEAL',      base:10,d:'回复 2 点生命',c:'#ffb3d0'},
+  {k:'hp',    n:'命星扩容', en:'MAX HP',    base:22,d:'最大生命 +2 并回满',c:'#e879a8'},
+  {k:'dmg',   n:'星刃淬炼', en:'BASE DMG',  base:20,d:'基础伤害 +2',c:'#e8c877'},
+  {k:'spd',   n:'流光加速', en:'MOVE SPD',  base:16,d:'移动速度 +8',c:'#6fd0b0'},
+  {k:'shield',n:'星盾',     en:'SHIELD',    base:20,d:'护盾 +1 层（可叠加，吸收一次伤害）',c:'#6fd0e8'}
+];
+function statCost(k){const s=STATS.find(q=>q.k===k);return s.base+4*G.bought[k];}
+function abilInfo(k){return ABILITIES.find(q=>q.k===k);}
+
+/* ---------- 8. 玩家 / 属性 / 护盾 ---------- */
+function makePlayer(){
+  return {x:ARENA_W/2,y:ARENA_H/2,px:0,py:0,hw:5,hh:5,vx:0,vy:0,kx:0,ky:0,
+    face:-Math.PI/2,roll:0,hp:6,maxHp:6,shield:0,inv:.8,hurtFlash:0,walk:0,dead:false,
+    atkPhase:'idle',atkT:0,cd:0,atkSet:new Set(),atkSets:[],didFire:false,slashFace:0,
+    mp:0,maxMp:MP_MAX,skillCd:0,
+    autoT:{aim:0,pierce:0,twin:0},
+    bonus:{move:0,dmg:0,crit:0,range:0},
+    stats:{dmg:4,speed:1,move:92,crit:.08,critM:2,kb:135,range:22,arc:9}};
+}
+function applyStats(){
+  P.stats.move=92+P.bonus.move+abil.ring*1.5+abil.pierce*.8;
+  P.stats.crit=.08+P.bonus.crit+abil.aim*.015;
+  P.stats.dmg=4+P.bonus.dmg;
+  P.stats.range=22+P.bonus.range+abil.pierce*1.5;
+}
+function makeGrid(){
+  grid=Array.from({length:AH},()=>new Uint8Array(AW));
+  for(let y=0;y<AH;y++)for(let x=0;x<AW;x++)
+    grid[y][x]=(x===0||y===0||x===AW-1||y===AH-1)?0:1;
+}
+function tileSolid(tx,ty){
+  if(tx<0||ty<0||tx>=AW||ty>=AH)return true;
+  return grid[ty][tx]===0;
+}
+function boxOf(e){return {l:e.x-e.hw,r:e.x+e.hw,t:e.y-e.hh,b:e.y+e.hh};}
+function aabb(a,b){const A=boxOf(a),B=boxOf(b);return A.l<B.r&&A.r>B.l&&A.t<B.b&&A.b>B.t;}
+function resolveAxis(e,axis,delta){
+  if(!delta)return;
+  e[axis]+=delta;
+  const b=boxOf(e);
+  const x0=Math.floor(b.l/TILE),x1=Math.floor((b.r-.001)/TILE);
+  const y0=Math.floor(b.t/TILE),y1=Math.floor((b.b-.001)/TILE);
+  for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++){
+    if(!tileSolid(tx,ty))continue;
+    if(delta>0)e[axis]=Math.min(e[axis],(axis==='x'?tx*TILE:ty*TILE)-e[axis==='x'?'hw':'hh']-.01);
+    else e[axis]=Math.max(e[axis],(axis==='x'?(tx+1)*TILE:(ty+1)*TILE)+e[axis==='x'?'hw':'hh']+.01);
+  }
+}
+function moveWithTiles(e,dx,dy){resolveAxis(e,'x',dx);resolveAxis(e,'y',dy);}
+function clampArena(e){
+  const mx=TILE+(e.hw||5)+1,my=TILE+(e.hh||5)+1;
+  e.x=clamp(e.x,mx,ARENA_W-mx);e.y=clamp(e.y,my,ARENA_H-my);
+}
+function separate(list){
+  for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
+    const a=list[i],b=list[j];if(a.dead||b.dead)continue;
+    const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
+    const min=(a.hw+b.hw)*1.5;
+    if(d>0&&d<min){const p=(min-d)/2,nx=dx/d,ny=dy/d;
+      a.x-=nx*p;a.y-=ny*p;b.x+=nx*p;b.y+=ny*p;}
+  }
+  for(const e of list)if(!e.dead)clampArena(e);
+}
+function drawPlayerOrb(){
+  const r=6;orbShadow(P.x,P.y,r);
+  let sx=1,sy=1,glow=0,gc='#6fd0e8';
+  if(P.atkPhase==='startup'){sx=.84;sy=.84;glow=.5;gc='#e8c877';}
+  else if(P.atkPhase==='active'){sx=1.20;sy=1.20;glow=.85;gc='#f7e6b0';}
+  else if(P.atkPhase==='recovery'){sx=1.06;sy=.94;glow=.22;gc='#8a63d2';}
+  if(P.hurtFlash>0){sx=.88;sy=1.12;glow=.9;gc='#ffffff';}
+  else if(P.inv>0){glow=Math.max(glow,.55);gc='#6fd0e8';}
+  const o={lit:BALL.lit,mid:BALL.mid,dark:BALL.dark,edge:BALL.edge,spec:BALL.spec,
+    sx,sy,roll:P.roll,glow,glowCol:gc,spin:frame*.06};
+  if(P.hurtFlash>0){o.lit='#ffffff';o.mid='#e6ecff';o.dark='#8b96c4';}
+  else if(P.inv>0&&((frame/4)|0)%2===0){o.lit='#8b96c4';o.mid='#4a5470';o.dark='#111624';}
+  pixelOrb(P.x,P.y,r,o);
+  for(let s=0;s<P.shield&&s<6;s++){
+    const rr=r+3+s*2.2;ctx.fillStyle=s%2?'#9fe4f2':'#6fd0e8';
+    for(let i=0;i<10;i++){const a=i*Math.PI/5+frame*.02*(s%2?1:-1);
+      ctx.fillRect(Math.round(P.x+Math.cos(a)*rr),Math.round(P.y+Math.sin(a)*rr*.85),1,1);}
+  }
+}
+
+/* ---------- 9. 敌人 / 波次 ---------- */
+function makeEnemy(type,x,y,w,noGold){
+  const b=ETYPES[type],k=hpK(w),maxHp=Math.round(b.hp*k);
+  return {type,x,y,px:x,py:y,vx:0,vy:0,kx:0,ky:0,
+    hw:b.r*.78,hh:b.r*.78,r:b.r,hp:maxHp,maxHp,
+    speed:b.speed*spdK(w),dmg:Math.min(4,Math.max(1,Math.round(b.dmg*dmgK(w)))),
+    gold:noGold?0:b.gold,ranged:b.ranged,style:ORB_STYLE[type],
+    state:'idle',t:R()*.5,stun:0,flash:0,atkCd:1+R()*1.5,ringCd:0,
+    dead:false,noGold:!!noGold,fromBoss:!!noGold,hpShow:3,phase:1};
+}
+function spawnWaveEnemy(){
+  const w=G.wave,type=pickType(w);
+  const a=R()*Math.PI*2,dist=215+RI(0,90)+Math.min(60,w*2);
+  let x=clamp(P.x+Math.cos(a)*dist,28,ARENA_W-28);
+  let y=clamp(P.y+Math.sin(a)*dist,28,ARENA_H-28);
+  if(tileSolid(Math.floor(x/TILE),Math.floor(y/TILE))){x=P.x+Math.cos(a)*120;y=P.y+Math.sin(a)*120;}
+  const e=makeEnemy(type,x,y,w,false);
+  enemies.push(e);G.waveSpawned++;
+  spawnRing(x,y,{r0:2,r1:12,life:.22,col:e.style.glow,col2:'#ffffff',n:8});
+}
+function spawnMega(){
+  enemies=[];bullets=[];warnings=[];
+  const w=G.wave,a=R()*Math.PI*2;
+  const x=clamp(P.x+Math.cos(a)*190,60,ARENA_W-60);
+  const y=clamp(P.y+Math.sin(a)*190,60,ARENA_H-60);
+  const e=makeEnemy('mega',x,y,w,false);
+  e.maxHp=e.hp=Math.round(ETYPES.mega.hp*(1+.35*(w/10-1)));
+  e.atkCd=1.6;e.phase=1;
+  enemies.push(e);G.mega=e;
+  showToast('WARNING  MEGA STAR EATER','warning');sfx('seal');
+  spawnRing(x,y,{r0:8,r1:60,life:.6,col:'#ff8ec7',col2:'#f7e6b0',n:30});
+}
+function startWave(){
+  const w=G.wave;
+  enemies=[];bullets=[];warnings=[];chests=chests.filter(c=>!c.open);pickups=[];parts=[];floats=[];rings=[];
+  G.waveSpawned=0;G.waveQuota=waveQuota(w);G.spawnT=.3;G.chestTimer=RI(7,15);G.mega=null;
+  P.inv=Math.max(P.inv,.6);
+  if(w%10===0){G.waveSpawned=1;spawnMega();}
+  else{showToast('WAVE '+String(w).padStart(2,'0'),'notice');sfx('clear');}
+  saveGame();   /* 每波开波即存档：重开链接可从本波开头继续 */
+}
+function updateWave(dt){
+  if(G.phase!=='fight')return;
+  if(!G.mega&&G.waveSpawned<G.waveQuota){
+    G.spawnT-=dt;
+    if(G.spawnT<=0&&enemies.filter(e=>!e.dead).length<34){
+      const n=Math.min(RI(1,3),G.waveQuota-G.waveSpawned);
+      for(let i=0;i<n;i++)spawnWaveEnemy();
+      G.spawnT=.34;
+    }
+  }
+  G.chestTimer-=dt;
+  if(G.chestTimer<=0&&!G.mega){
+    G.chestTimer=RI(12,22);
+    if(chests.filter(c=>!c.open).length<2){
+      const a=R()*Math.PI*2,d=RI(90,190);
+      const x=clamp(P.x+Math.cos(a)*d,30,ARENA_W-30);
+      const y=clamp(P.y+Math.sin(a)*d,30,ARENA_H-30);
+      chests.push({x,y,hw:7,hh:6,hp:16,maxHp:16,open:false,t:0});
+      showToast('STAR CHEST  APPEARED','blessing');sfx('pick');
+    }
+  }
+  if(G.waveSpawned>=G.waveQuota&&!enemies.some(e=>!e.dead))waveClear();
+}
+function waveClear(){
+  G.phase='shop';sfx('clear');
+  showToast('WAVE CLEAR  ·  STAR BAZAAR 星辉商栈已开启','victory');
+  spawnRing(P.x,P.y,{r0:6,r1:40,life:.45,col:'#f7e6b0',col2:'#6fd0e8',n:24});
+  openShop();
+}
+
+/* ---------- 10. 战斗：三段帧 / 星环 / 穿透 / 双倍 / 自动瞄准 ---------- */
+const ATK={startup:.06,active:.09,recovery:.13,range:22,arc:9};
+function nearestEnemy(maxD){
+  let best=null,bd=maxD||1e9;
+  for(const e of enemies){if(e.dead)continue;
+    const d=Math.hypot(e.x-P.x,e.y-P.y);if(d<bd){bd=d;best=e;}}
+  return best;
+}
+function autoAim(){
+  const e=nearestEnemy(320);
+  if(e)P.face=Math.atan2(e.y-P.y,e.x-P.x);
+}
+function startAttack(){
+  if(P.dead||P.atkPhase!=='idle'||P.cd>0)return;
+  if(abil.aim>0)autoAim();
+  else if(touchUI&&Math.hypot(stick.x,stick.y)<.12){const e=nearestEnemy(64);
+    if(e)P.face=Math.atan2(e.y-P.y,e.x-P.x);}
+  P.atkPhase='startup';P.atkT=ATK.startup;
+  P.cd=(ATK.startup+ATK.active+ATK.recovery)/P.stats.speed+.02;
+  P.atkSet=new Set();P.atkSets=[new Set(),new Set(),new Set(),new Set()];
+  P.didFire=false;P.slashFace=P.face;
+  spawnRing(P.x,P.y,{r0:20,r1:6,life:ATK.startup+.05,col:'#6fd0e8',col2:'#8a63d2',n:12,spin:1.4});
+  sfx('charge');
+}
+function updateAttack(dt){
+  if(P.cd>0)P.cd-=dt;
+  if(P.atkPhase==='idle')return;
+  P.atkT-=dt;
+  if(P.atkPhase==='active'){
+    const extra=abil.twin>0?twinExtra(abil.twin):0;
+    const mul=.6+.04*Math.max(0,abil.twin-1);
+    meleeHit(0,1,0,P.atkSet);
+    for(let k=1;k<=extra;k++){
+      const off=(k%2?1:-1)*(.20+.05*k);
+      meleeHit(k,mul,off,P.atkSets[k]||new Set());
+    }
+    if(!P.didFire){
+      P.didFire=true;
+      if(abil.pierce>0)firePierce();
+      if(abil.aim>=4)fireHoming();
+    }
+  }
+  if(P.atkT<=0){
+    if(P.atkPhase==='startup'){
+      P.atkPhase='active';P.atkT=ATK.active;
+      const reach=ATK.range+(P.stats.range-22);
+      spawnRing(P.x,P.y,{r0:6,r1:reach+7,life:.24,arc:2.1,face:P.slashFace,
+        col:'#f7e6b0',col2:'#6fd0e8',n:22});
+      const ex=abil.twin>0?twinExtra(abil.twin):0;
+      for(let k=1;k<=ex;k++)
+        spawnRing(P.x,P.y,{r0:6,r1:reach+5,life:.22,arc:1.5,
+          face:P.slashFace+(k%2?1:-1)*(.20+.05*k),col:'#e879a8',col2:'#fff6d8',n:12});
+      sfx('swing');
+    }
+    else if(P.atkPhase==='active'){P.atkPhase='recovery';P.atkT=ATK.recovery/P.stats.speed;}
+    else{P.atkPhase='idle';if(atkBuffer>0){atkBuffer=0;startAttack();}}
+  }
+}
+function meleeHit(idx,dmgMul,faceOff,set){
+  const reach=ATK.range+(P.stats.range-22),arc=ATK.arc;
+  const face=P.slashFace+(faceOff||0),fx=Math.cos(face),fy=Math.sin(face);
+  const bonus=abil.aim>0?(abil.aim-1)*.5:0;
+  for(const e of enemies){
+    if(e.dead||set.has(e))continue;
+    const dx=e.x-P.x,dy=e.y-P.y;
+    const forward=dx*fx+dy*fy,side=-dx*fy+dy*fx;
+    if(forward>-5&&forward<reach+e.hw&&Math.abs(side)<arc+e.hw){
+      set.add(e);hitEnemy(e,(P.stats.dmg+bonus)*(dmgMul||1),fx,fy);
+    }
+  }
+  for(const c of chests){
+    if(c.open||set.has(c))continue;
+    const dx=c.x-P.x,dy=c.y-P.y,forward=dx*fx+dy*fy,side=-dx*fy+dy*fx;
+    if(forward>-5&&forward<reach+c.hw&&Math.abs(side)<arc+c.hw){set.add(c);damageChest(c,(P.stats.dmg+bonus)*(dmgMul||1));}
+  }
+}
+function firePierce(){
+  const lv=abil.pierce,n=pierceShots(lv);
+  for(let i=0;i<n;i++){
+    const a=P.slashFace+(i-(n-1)/2)*.19;
+    bullets.push({x:P.x+Math.cos(a)*7,y:P.y+Math.sin(a)*7,
+      vx:Math.cos(a)*270,vy:Math.sin(a)*270,hw:2,hh:2,
+      dmg:Math.max(1,P.stats.dmg*.45),life:1.1,friend:true,pierce:pierceCount(lv),
+      hitSet:new Set(),col:'#f7e6b0',dead:false,trail:true});
+  }
+  spawnRing(P.x,P.y,{r0:6,r1:13,life:.16,arc:.9,face:P.slashFace,col:'#fff6d8',col2:'#e8c877',n:7});
+}
+function fireHoming(){
+  const n=abil.aim>=10?3:(abil.aim>=7?2:1);
+  for(let i=0;i<n;i++){
+    const a=P.slashFace+(i-(n-1)/2)*.5;
+    bullets.push({x:P.x,y:P.y,vx:Math.cos(a)*190,vy:Math.sin(a)*190,hw:2,hh:2,
+      dmg:Math.max(1,P.stats.dmg*.35),life:1.6,friend:true,pierce:0,homing:true,
+      hitSet:new Set(),col:'#6fd0e8',dead:false,trail:true});
+  }
+}
+function hitEnemy(e,dmg,fx,fy){
+  if(e.dead)return;   /* 多能力同帧命中已死目标，避免重复结算 */
+  const crit=R()<P.stats.crit,d=Math.max(1,Math.round(dmg*(crit?P.stats.critM:1)));
+  e.hp-=d;e.stun=.10;e.flash=.12;e.hpShow=3;
+  const kb=P.stats.kb*(e.type==='mega'?.08:(e.r>=10?.35:1));
+  e.kx+=fx*kb;e.ky+=fy*kb;
+  hitstop=crit?.09:.04;shake=Math.min(6,2+d*.22);flash=Math.max(flash,.05);
+  spawnRing(e.x,e.y,{r0:2,r1:crit?15:10,life:.18,col:crit?'#f7e6b0':'#e8c877',col2:'#ffffff',n:8});
+  spawnParts(e.x,e.y,crit?10:6,crit?'#f7e6b0':'#e8c877',fx,fy);
+  floats.push({x:e.x,y:e.y-e.r-4,t:(crit?'CRIT ':'')+d,col:crit?'#f7e6b0':'#ffffff',
+    life:.65,vy:-24,scale:crit?2:1});
+  sfx(crit?'crit':'hit');
+  if(e.hp<=0)killEnemy(e);
+}
+function killEnemy(e){
+  if(e.dead)return;   /* 幂等：一次击杀只结算一次金币与击杀数 */
+  e.dead=true;G.kills++;
+  /* 怪物掉落星辉宝匣：档位越高越容易掉 + 每 9 杀保底；召唤小兵不掉；场上最多 3 个 */
+  if(!e.fromBoss&&!G.mega&&chests.filter(c=>!c.open).length<3){
+    const DROP={minion:.10,elite:.22,miniboss:.40,leader:.7,boss:1,mega:1};
+    G.dropPity++;
+    if(R()<(DROP[e.type]||0)||G.dropPity>=9){
+      G.dropPity=0;
+      chests.push({x:clamp(e.x,26,ARENA_W-26),y:clamp(e.y,26,ARENA_H-26),
+        hw:7,hh:6,hp:16,maxHp:16,open:false,t:0,drop:true});
+      spawnRing(e.x,e.y,{r0:4,r1:24,life:.45,col:'#f7e6b0',col2:'#fff6d8',n:16});
+      spawnParts(e.x,e.y,10,'#f7e6b0');
+      showToast('STAR CHEST DROPPED','blessing');
+    }
+  }
+  const g=e.gold;
+  if(g>0){G.gold+=g;floats.push({x:e.x,y:e.y-e.r-10,t:'+'+g+' G',col:'#e8c877',life:.9,vy:-20,scale:1});}
+  spawnRing(e.x,e.y,{r0:3,r1:e.r>=12?38:20,life:.32,col:'#f7e6b0',col2:'#6fd0e8',n:e.r>=12?24:14});
+  spawnParts(e.x,e.y,e.r>=12?24:12,e.r>=12?'#e8c877':'#6fd0b0');
+  sfx('die');shake=Math.max(shake,e.r>=12?4:2);
+  if(e.type==='mega'){
+    G.mega=null;P.hp=Math.min(P.maxHp,P.hp+2);
+    showToast('MEGA BOSS DEFEATED  +50 G','victory');sfx('clear');
+  }
+}
+function damagePlayer(dmg,sx,sy){
+  if(P.inv>0||P.dead||G.phase!=='fight')return;
+  if(P.shield>0){
+    P.shield--;P.inv=.55;
+    spawnRing(P.x,P.y,{r0:6,r1:24,life:.3,col:'#6fd0e8',col2:'#ffffff',n:16});
+    spawnParts(P.x,P.y,8,'#9fe4f2',sx,sy);
+    floats.push({x:P.x,y:P.y-12,t:'SHIELD',col:'#6fd0e8',life:.8,vy:-20,scale:1});
+    sfx('shield');P.kx+=sx*50;P.ky+=sy*50;return;
+  }
+  P.hp-=dmg;P.inv=.85;P.hurtFlash=.2;hitstop=.06;shake=5;flash=.12;
+  P.kx+=sx*110;P.ky+=sy*110;
+  spawnRing(P.x,P.y,{r0:6,r1:19,life:.24,col:'#d96a7a',col2:'#ffb3d0',n:12});
+  floats.push({x:P.x,y:P.y-10,t:'-'+dmg,col:'#ffb3d0',life:.8,vy:-22,scale:2});
+  spawnParts(P.x,P.y,8,'#e879a8',sx,sy);sfx('hurt');
+  if(P.hp<=0)gameOver();
+}
+function damageChest(c,dmg){
+  c.hp-=dmg;
+  spawnParts(c.x,c.y,5,'#e8c877');
+  floats.push({x:c.x,y:c.y-10,t:'-'+Math.round(dmg),col:'#f7e6b0',life:.5,vy:-18,scale:1});
+  if(c.hp<=0){c.open=true;sfx('pick');
+    spawnRing(c.x,c.y,{r0:4,r1:30,life:.4,col:'#f7e6b0',col2:'#6fd0e8',n:20});
+    for(let i=0;i<14;i++)spawnParts(c.x,c.y,1,'#e8c877');
+    const bonus=RI(6,14);G.gold+=bonus;
+    floats.push({x:c.x,y:c.y-16,t:'+'+bonus+' G',col:'#e8c877',life:1,vy:-18,scale:1});
+    openChestReward();}
+}
+/* 主动技能：星能充满后由系统自动施放(过几秒一次)，效果随「当前能力」变化，全部由黑球释放 */
+function castSkill(){
+  if(G.phase!=='fight'||G.paused||P.dead)return false;
+  const k=G.current;
+  if(!k||abil[k]<=0||P.mp<SKILL_COST||P.skillCd>0)return false;
+  const a=abilInfo(k),lv=abil[k];
+  P.mp-=SKILL_COST;P.skillCd=SKILL_CD;
+  const base=2+1.1*lv+P.stats.dmg*.30;   /* 受等级与基础伤害约束，避免战力崩坏 */
+  spawnRing(P.x,P.y,{r0:5,r1:30,life:.3,col:a.c,col2:'#ffffff',n:20});
+  spawnRing(P.x,P.y,{r0:3,r1:52,life:.42,col:'#6fd0e8',col2:a.c,n:26,spin:1.5});
+  if(k==='aim'){
+    const list=enemies.filter(e=>!e.dead).sort((u,v)=>
+      Math.hypot(u.x-P.x,u.y-P.y)-Math.hypot(v.x-P.x,v.y-P.y)).slice(0,3);
+    for(let i=0;i<list.length;i++){
+      const ang=Math.atan2(list[i].y-P.y,list[i].x-P.x)+(i-1)*.3;
+      bullets.push({x:P.x,y:P.y,vx:Math.cos(ang)*230,vy:Math.sin(ang)*230,hw:2,hh:2,
+        dmg:Math.max(1,base*.65),life:1.7,friend:true,pierce:0,homing:true,
+        hitSet:new Set(),col:a.c,dead:false,trail:true});
+    }
+  }else if(k==='ring'){
+    spawnRing(P.x,P.y,{r0:8,r1:48,life:.4,col:a.c,col2:'#fff6d8',n:30,spin:-1.2});
+    let n=0;
+    for(const e of enemies){if(e.dead||n>=8)continue;
+      const dx=e.x-P.x,dy=e.y-P.y,d=Math.hypot(dx,dy);
+      if(d<48+e.r){n++;hitEnemy(e,base*.8,dx/(d||1),dy/(d||1));}}
+  }else if(k==='pierce'){
+    for(let i=0;i<4;i++){
+      const ang=P.face+i*Math.PI/2;
+      bullets.push({x:P.x,y:P.y,vx:Math.cos(ang)*280,vy:Math.sin(ang)*280,hw:2,hh:2,
+        dmg:Math.max(1,base*.7),life:1.1,friend:true,pierce:1+Math.floor(lv/3),
+        hitSet:new Set(),col:a.c,dead:false,trail:true});
+    }
+  }else if(k==='twin'){
+    for(let q=0;q<2;q++)spawnRing(P.x,P.y,{r0:6,r1:42,life:.3,
+      col:q?a.c:'#fff6d8',col2:'#e8c877',n:24,spin:q?1.6:-1.6});
+    for(const e of enemies){if(e.dead)continue;
+      const dx=e.x-P.x,dy=e.y-P.y,d=Math.hypot(dx,dy);
+      if(d<44+e.r)hitEnemy(e,base*.7,dx/(d||1),dy/(d||1));}
+  }else if(k==='meteor'){
+    const live=enemies.filter(e=>!e.dead);
+    const c0=live.length?pick(live):{x:P.x+40,y:P.y};
+    for(let i=0;i<2;i++){
+      const jx=clamp(i?c0.x+RI(-56,56):c0.x,24,ARENA_W-24);
+      const jy=clamp(i?c0.y+RI(-56,56):c0.y,24,ARENA_H-24);
+      warnings.push({x:jx,y:jy,t:.55,max:.55,r:30+lv,dmg:base,kind:'meteor'});
+    }
+  }
+  for(const b of bullets)if(!b.friend&&Math.hypot(b.x-P.x,b.y-P.y)<34)b.dead=true;
+  shake=Math.max(shake,4);flash=Math.max(flash,.08);hitstop=Math.max(hitstop,.05);
+  sfx('nova');
+  return true;
+}
+
+/* ---------- 10b. 五种被动能力：全部自动释放（完全不依赖普攻按钮） ----------
+   ring 常驻环绕、meteor 定时天降已在 updateAbilities 中自动；
+   这里给 aim / pierce / twin 补独立定时自动施放：间隔随等级缩短但有下限，
+   伤害系数温和且限制命中数，避免与主动技能叠加造成战力崩坏。 */
+function autoInterval(k,lv){return Math.max(2.0,AUTO_BASE[k]-0.18*(lv-1));}
+function autoFace(){
+  const e=nearestEnemy(320);
+  return e?Math.atan2(e.y-P.y,e.x-P.x):P.face;
+}
+function updateAutoAbilities(dt){
+  if(G.phase!=='fight'||G.paused||P.dead)return;
+  for(const k of ['aim','pierce','twin']){
+    const lv=abil[k];
+    if(lv<=0){P.autoT[k]=0;continue;}
+    P.autoT[k]-=dt;
+    if(P.autoT[k]>0)continue;
+    P.autoT[k]=autoInterval(k,lv);
+    const a=abilInfo(k),dmg=P.stats.dmg;
+    if(k==='aim'){
+      const n=1+(lv>=7?1:0);
+      for(let i=0;i<n;i++){
+        const ang=autoFace()+(i-(n-1)/2)*.4;
+        bullets.push({x:P.x,y:P.y,vx:Math.cos(ang)*200,vy:Math.sin(ang)*200,hw:2,hh:2,
+          dmg:Math.max(1,dmg*.35),life:1.6,friend:true,pierce:0,homing:true,
+          hitSet:new Set(),col:a.c,dead:false,trail:true});
+      }
+      spawnRing(P.x,P.y,{r0:5,r1:14,life:.2,col:a.c,col2:'#ffffff',n:8});
+    }else if(k==='pierce'){
+      const ang=autoFace();
+      bullets.push({x:P.x,y:P.y,vx:Math.cos(ang)*270,vy:Math.sin(ang)*270,hw:2,hh:2,
+        dmg:Math.max(1,dmg*.45),life:1.1,friend:true,pierce:pierceCount(lv),
+        hitSet:new Set(),col:a.c,dead:false,trail:true});
+      spawnRing(P.x,P.y,{r0:5,r1:12,life:.18,col:a.c,col2:'#fff6d8',n:7});
+    }else{ /* twin：一次全向近身星弧，最多命中 6 个目标 */
+      spawnRing(P.x,P.y,{r0:6,r1:34,life:.26,col:a.c,col2:'#fff6d8',n:20});
+      let n=0;
+      for(const e of enemies){if(e.dead||n>=6)continue;
+        const dx=e.x-P.x,dy=e.y-P.y,d=Math.hypot(dx,dy);
+        if(d<34+e.r){n++;hitEnemy(e,dmg*.5,dx/(d||1),dy/(d||1));}}
+    }
+  }
+}
+/* 主动技能：星能(蓝)自动充满 30 点即由系统施放「当前能力」爆发，过几秒一次，无需按钮 */
+function autoCastSkill(){
+  if(G.phase!=='fight'||G.paused||P.dead)return;
+  if(!G.current||abil[G.current]<=0)return;
+  if(P.mp>=SKILL_COST&&P.skillCd<=0)castSkill();
+}
+
+/* ---------- 11. 五种能力：每帧触发 / 特效 ---------- */
+function updateAbilities(dt){
+  orbitA+=(1.6+.12*Math.max(0,abil.ring-1))*dt;
+  aimTarget=abil.aim>0?nearestEnemy(320):null;
+  if(abil.ring>0){
+    const n=ringCount(abil.ring),rad=20+2*(abil.ring-1),dmg=1.2+.55*(abil.ring-1);
+    ringHits=[];
+    for(let i=0;i<n;i++){
+      const a=orbitA+i*Math.PI*2/n;
+      const sx=P.x+Math.cos(a)*rad,sy=P.y+Math.sin(a)*rad*.86;
+      ringHits.push({x:sx,y:sy});
+      for(const e of enemies){
+        if(e.dead||e.ringCd>0)continue;
+        if(Math.hypot(e.x-sx,e.y-sy)<e.r+6){e.ringCd=.45;hitEnemy(e,dmg,Math.cos(a),Math.sin(a));}
+      }
+      for(const c of chests)if(!c.open&&Math.hypot(c.x-sx,c.y-sy)<c.hw+5){
+        if(!c.ringCd||c.ringCd<=0){c.ringCd=.45;damageChest(c,dmg);}
+      }
+    }
+  }else ringHits=[];
+  for(const e of enemies)if(e.ringCd>0)e.ringCd-=dt;
+  for(const c of chests)if(c.ringCd>0)c.ringCd-=dt;
+  if(abil.meteor>0){
+    meteorT-=dt;
+    if(meteorT<=0){
+      meteorT=Math.max(1.3,4.2-.28*(abil.meteor-1));
+      const live=enemies.filter(e=>!e.dead);
+      if(live.length){
+        let best=live[0],bn=-1;
+        for(const e of live){let c=0;
+          for(const o of live)if(Math.hypot(o.x-e.x,o.y-e.y)<70)c++;
+          if(c>bn){bn=c;best=e;}}
+        const shots=meteorShots(abil.meteor),rad=26+2.5*(abil.meteor-1),dmg=3+1.5*(abil.meteor-1);
+        for(let i=0;i<shots;i++){
+          const jx=i===0?best.x:clamp(best.x+RI(-70,70),24,ARENA_W-24);
+          const jy=i===0?best.y:clamp(best.y+RI(-70,70),24,ARENA_H-24);
+          warnings.push({x:jx,y:jy,t:.62,max:.62,r:rad,dmg,kind:'meteor'});
+          parts.push({x:P.x,y:P.y,vx:(jx-P.x)*1.4,vy:(jy-P.y)*1.4,
+            life:.42,max:.42,col:'#f7e6b0',size:2,g:0});
+        }
+        sfx('charge');
+      }
+    }
+  }
+}
+function spawnParts(x,y,n,col,fx,fy){
+  for(let i=0;i<n;i++){const a=R()*Math.PI*2,s=30+R()*110;
+    parts.push({x,y,vx:Math.cos(a)*s+(fx||0)*30,vy:Math.sin(a)*s+(fy||0)*30,
+      life:.3+R()*.35,max:.65,col,size:R()<.3?2:1,g:0});}
+}
+function updateParts(dt){
+  for(const p of parts){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;
+    p.vx*=Math.pow(.02,dt);p.vy*=Math.pow(.02,dt);}
+  parts=parts.filter(p=>p.life>0);
+}
+function updateWarnings(dt){
+  for(const w of warnings){
+    w.t-=dt;
+    if(w.t<=0&&!w.done){
+      w.done=true;
+      if(w.kind==='meteor'){
+        spawnRing(w.x,w.y,{r0:4,r1:w.r+8,life:.34,col:'#f7e6b0',col2:'#d96a7a',n:24,sy:.8});
+        spawnRing(w.x,w.y,{r0:2,r1:w.r,life:.26,col:'#ffffff',col2:'#e8c877',n:16});
+        spawnParts(w.x,w.y,16,'#e8c877');
+        for(const e of enemies){if(e.dead)continue;
+          const d=Math.hypot(e.x-w.x,e.y-w.y);
+          if(d<w.r+e.r){const nx=(e.x-w.x)/(d||1),ny=(e.y-w.y)/(d||1);
+            hitEnemy(e,w.dmg,nx,ny);}}
+        for(const c of chests)if(!c.open&&Math.hypot(c.x-w.x,c.y-w.y)<w.r+c.hw)damageChest(c,w.dmg);
+        shake=Math.max(shake,3.5);sfx('meteor');
+      }else{
+        spawnRing(w.x,w.y,{r0:4,r1:w.r+8,life:.32,col:'#ff8ec7',col2:'#f7e6b0',n:26,sy:.85});
+        if(Math.hypot(P.x-w.x,P.y-w.y)<w.r+P.hw)
+          damagePlayer(w.dmg,(P.x-w.x)/(w.r||1),(P.y-w.y)/(w.r||1));
+        shake=Math.max(shake,4);sfx('meteor');
+      }
+    }
+  }
+  warnings=warnings.filter(w=>!w.done);
+}
+function enemyBullet(e,vx,vy,dmg){
+  bullets.push({x:e.x,y:e.y,vx,vy,hw:3,hh:3,dmg:dmg||1,life:4,
+    friend:false,pierce:0,hitSet:new Set(),col:e.style.glow,dead:false});
+}
+
+/* ---------- 12. 敌人 AI（含超级大 Boss） ---------- */
+function updateEnemies(dt){
+  for(const e of enemies){
+    if(e.dead)continue;
+    e.t+=dt;if(e.stun>0)e.stun-=dt;if(e.flash>0)e.flash-=dt;
+    if(e.hpShow>0)e.hpShow-=dt;
+    if(e.type==='mega'){updateMega(e,dt);continue;}
+    const dx=P.x-e.x,dy=P.y-e.y,d=Math.hypot(dx,dy)||1;
+    const sp=e.stun>0?0:e.speed;
+    e.vx=dx/d*sp;e.vy=dy/d*sp;
+    if(e.ranged>0){
+      e.atkCd-=dt;
+      if(e.atkCd<=0&&d<250){
+        e.atkCd=(e.ranged===2?1.7:2.3)+R()*.6;
+        const n=e.ranged===2?3:1;
+        for(let i=0;i<n;i++){
+          const a=Math.atan2(dy,dx)+(i-(n-1)/2)*.20;
+          enemyBullet(e,Math.cos(a)*155,Math.sin(a)*155,1);
+        }
+        spawnRing(e.x,e.y,{r0:2,r1:9,life:.18,col:e.style.glow,col2:'#ffffff',n:7});
+        sfx('shoot');
+      }
+    }
+    e.px=e.x;e.py=e.y;
+    e.kx*=Math.pow(.0015,dt);e.ky*=Math.pow(.0015,dt);
+    moveWithTiles(e,e.vx*dt+e.kx*dt,e.vy*dt+e.ky*dt);
+    clampArena(e);
+    if(aabb(P,e))damagePlayer(e.dmg,dx/d,dy/d);
+  }
+  separate(enemies);
+}
+function updateMega(e,dt){
+  const dx=P.x-e.x,dy=P.y-e.y,d=Math.hypot(dx,dy)||1;
+  const want=d>110?1:(d<72?-.5:0);
+  e.vx=dx/d*e.speed*want;e.vy=dy/d*e.speed*want;
+  e.px=e.x;e.py=e.y;
+  e.kx*=Math.pow(.0015,dt);e.ky*=Math.pow(.0015,dt);
+  moveWithTiles(e,e.vx*dt+e.kx*dt,e.vy*dt+e.ky*dt);clampArena(e);
+  if(aabb(P,e))damagePlayer(e.dmg,dx/d,dy/d);
+  const hpR=e.hp/e.maxHp;
+  e.phase=hpR>.6?1:(hpR>.3?2:3);
+  e.atkCd-=dt;
+  if(e.atkCd<=0){
+    e.atkCd=e.phase===1?2.2:(e.phase===2?1.8:1.4);
+    const n=e.phase===1?14:(e.phase===2?18:22);
+    for(let i=0;i<n;i++){const a=i*Math.PI*2/n+frame*.012;
+      enemyBullet(e,Math.cos(a)*135,Math.sin(a)*135,1);}
+    spawnRing(e.x,e.y,{r0:6,r1:34,life:.3,col:'#ff8ec7',col2:'#f7e6b0',n:20});
+    sfx('shoot');
+    if(e.phase>=2){
+      const cnt=e.phase===2?2:3;
+      for(let i=0;i<cnt;i++){
+        const a=R()*Math.PI*2;
+        const mx=clamp(e.x+Math.cos(a)*46,28,ARENA_W-28);
+        const my=clamp(e.y+Math.sin(a)*46,28,ARENA_H-28);
+        const m=makeEnemy(R()<.5?'elite':'minion',mx,my,G.wave,true);
+        m.fromBoss=true;enemies.push(m);
+        spawnRing(mx,my,{r0:2,r1:12,life:.24,col:'#ff8ec7',col2:'#ffffff',n:8});
+      }
+      showToast('BOSS SUMMONS MINIONS','warning');
+    }
+    if(e.phase>=2){
+      const cnt=e.phase===3?2:1;
+      for(let i=0;i<cnt;i++){
+        const wx=clamp(P.x+RI(-50,50),24,ARENA_W-24);
+        const wy=clamp(P.y+RI(-50,50),24,ARENA_H-24);
+        warnings.push({x:wx,y:wy,t:.9,max:.9,r:34,dmg:2,kind:'slam'});
+      }
+    }
+  }
+}
+function updateBullets(dt){
+  for(const b of bullets){
+    if(b.dead)continue;
+    b.life-=dt;if(b.life<=0){b.dead=true;continue;}
+    if(b.homing){
+      const e=nearestEnemy(240);
+      if(e){const a=Math.atan2(e.y-b.y,e.x-b.x),sp=Math.hypot(b.vx,b.vy);
+        const ca=Math.atan2(b.vy,b.vx);
+        let da=a-ca;while(da>Math.PI)da-=Math.PI*2;while(da<-Math.PI)da+=Math.PI*2;
+        const na=ca+clamp(da,-3.2*dt,3.2*dt);
+        b.vx=Math.cos(na)*sp;b.vy=Math.sin(na)*sp;}
+    }
+    if(b.x<6||b.x>ARENA_W-6||b.y<6||b.y>ARENA_H-6){b.dead=true;continue;}
+    if(b.x<cam.x-90||b.x>cam.x+VW+90||b.y<cam.y-90||b.y>cam.y+VH+90){b.dead=true;continue;}
+    const sp=Math.hypot(b.vx,b.vy),steps=Math.max(1,Math.ceil(sp*dt/4));
+    const sx=b.vx*dt/steps,sy=b.vy*dt/steps;
+    for(let s=0;s<steps&&!b.dead;s++){
+      b.x+=sx;b.y+=sy;
+      if(tileSolid(Math.floor(b.x/TILE),Math.floor(b.y/TILE))){
+        b.dead=true;spawnParts(b.x,b.y,3,b.col);break;}
+      if(b.friend){
+        for(const e of enemies){
+          if(e.dead||b.hitSet.has(e))continue;
+          if(Math.hypot(e.x-b.x,e.y-b.y)<e.r+b.hw){
+            b.hitSet.add(e);const l=Math.hypot(b.vx,b.vy)||1;
+            hitEnemy(e,b.dmg,b.vx/l,b.vy/l);
+            b.pierce--;if(b.pierce<0)b.dead=true;
+            break;
+          }
+        }
+      }else if(Math.hypot(P.x-b.x,P.y-b.y)<P.hw+b.hw){
+        const l=Math.hypot(b.vx,b.vy)||1;
+        b.dead=true;damagePlayer(b.dmg,b.vx/l,b.vy/l);
+      }
+    }
+  }
+  bullets=bullets.filter(b=>!b.dead);
+}
+
+/* ---------- 13. 玩家更新 ---------- */
+function updatePlayer(dt){
+  P.px=P.x;P.py=P.y;
+  if(P.inv>0)P.inv-=dt;
+  if(P.hurtFlash>0)P.hurtFlash-=dt;
+  if(P.skillCd>0)P.skillCd-=dt;
+  P.mp=Math.min(P.maxMp,P.mp+MP_REGEN*dt);   /* 星能(蓝)随时间回复 */
+  let ix=(keys.d?1:0)-(keys.a?1:0)+stick.x,iy=(keys.s?1:0)-(keys.w?1:0)+stick.y;
+  const l=Math.hypot(ix,iy);if(l>1){ix/=l;iy/=l;}
+  if(mouse.aim&&!touchUI)P.face=Math.atan2(mouse.y+cam.y-P.y,mouse.x+cam.x-P.x);
+  else if((ix||iy)&&abil.aim===0)P.face=Math.atan2(iy,ix);
+  /* 纯 2D 平面：只有上下左右，无跳跃 / 无滑铲 */
+  const sp=P.stats.move*(P.atkPhase==='active'?.55:1);
+  P.vx=ix*sp;P.vy=iy*sp;
+  P.kx*=Math.pow(.0015,dt);P.ky*=Math.pow(.0015,dt);
+  moveWithTiles(P,P.vx*dt+P.kx*dt,P.vy*dt+P.ky*dt);
+  clampArena(P);
+  P.walk+=(Math.abs(P.vx)+Math.abs(P.vy))*dt*.12;
+  const target=Math.abs(P.vx)>10?Math.sign(P.vx)*.26:0;
+  P.roll+=(target-P.roll)*Math.min(1,dt*7);
+  if(atkBuffer>0)atkBuffer-=dt;
+  const wantAtk=(touchUI&&touchAtk)||pressed.j||mouse.down||atkBuffer>0;
+  if(wantAtk&&P.atkPhase==='idle'&&P.cd<=0){startAttack();atkBuffer=0;}
+  updateAttack(dt);
+}
+function update(dt){
+  updatePlayer(dt);
+  updateWave(dt);
+  updateEnemies(dt);
+  updateAbilities(dt);
+  updateAutoAbilities(dt);
+  autoCastSkill();
+  updateWarnings(dt);
+  updateBullets(dt);
+  updateParts(dt);
+  updateRings(dt);
+  for(const f of floats){f.life-=dt;f.y+=f.vy*dt;f.vy*=Math.pow(.2,dt);}
+  floats=floats.filter(f=>f.life>0);
+  for(const c of chests)c.t+=dt;
+  /* 靠近自动开启宝匣（已无交互键）：与击碎走同一套奖励流程 */
+  for(const c of chests){
+    if(c.open)continue;
+    if(Math.hypot(c.x-P.x,c.y-P.y)<15){
+      c.open=true;sfx('pick');
+      spawnRing(c.x,c.y,{r0:4,r1:30,life:.4,col:'#f7e6b0',col2:'#6fd0e8',n:20});
+      const bonus=RI(6,14);G.gold+=bonus;
+      floats.push({x:c.x,y:c.y-16,t:'+'+bonus+' G',col:'#e8c877',life:1,vy:-18,scale:1});
+      openChestReward();break;
+    }
+  }
+  const tx=clamp(P.x-VW/2,0,ARENA_W-VW),ty=clamp(P.y-VH/2,0,ARENA_H-VH);
+  cam.x+=(tx-cam.x)*Math.min(1,dt*9);cam.y+=(ty-cam.y)*Math.min(1,dt*9);
+  shake*=Math.pow(.002,dt);if(shake<.05)shake=0;
+  G.time+=dt;
+}
+
+/* ---------- 14. 渲染 ---------- */
+function drawFloor(tx,ty){
+  const x=tx*TILE,y=ty*TILE,h=hash2(tx,ty);
+  if(grid[ty][tx]===0){
+    ctx.fillStyle='#1d2a58';ctx.fillRect(x,y,TILE,TILE);
+    ctx.fillStyle='#2a3a72';ctx.fillRect(x+1,y+1,14,6);ctx.fillRect(x+1,y+9,6,6);ctx.fillRect(x+9,y+9,6,6);
+    ctx.fillStyle='#3d5196';ctx.fillRect(x+1,y+1,14,1);
+    ctx.fillStyle='#0d1534';ctx.fillRect(x,y+7,16,1);ctx.fillRect(x+7,y+8,1,8);ctx.fillRect(x,y+15,16,1);
+    ctx.fillStyle='#8a63d2';ctx.fillRect(x+2,y+2,2,2);ctx.fillRect(x+12,y+2,2,2);
+    return;
+  }
+  ctx.fillStyle=h>.72?'#16234e':(h>.36?'#121c42':'#101a3c');
+  ctx.fillRect(x,y,TILE,TILE);
+  ctx.fillStyle='#1b2a58';ctx.fillRect(x+((h*13)|0)%12,y+((h*29)|0)%12,3,2);
+  if(h>.90){ctx.fillStyle=h>.95?'#e8c877':'#6fd0e8';
+    ctx.fillRect(x+((h*23)|0)%13,y+((h*17)|0)%13,1,1);}
+  ctx.fillStyle='#0a1230';ctx.fillRect(x,y+TILE-1,TILE,1);ctx.fillRect(x+TILE-1,y,1,TILE);
+}
+function drawBar(x,y,w,h,p,col){
+  ctx.fillStyle='#070b1c';ctx.fillRect(x-2,y-2,w+4,h+4);
+  ctx.fillStyle='#1d2a58';ctx.fillRect(x-1,y-1,w+2,h+2);
+  const f=Math.round(w*clamp(p,0,1));
+  ctx.fillStyle=col;ctx.fillRect(x,y,f,h);
+  if(f>1){ctx.fillStyle='#fff6d8';ctx.fillRect(x,y,Math.min(2,f),h);}
+}
+function drawEnemyHP(e){
+  const w=e.r>=12?34:(e.r>=9?20:12),x=Math.round(e.x-w/2),y=Math.round(e.y-e.r-7);
+  ctx.fillStyle='#070b1c';ctx.fillRect(x-1,y-1,w+2,4);
+  ctx.fillStyle=e.hpShow>0?'#3a2038':'#202a4a';ctx.fillRect(x,y,w,2);
+  ctx.fillStyle=e.type==='mega'?'#ff8ec7':(e.r>=10?'#e8c877':'#6fd0b0');
+  ctx.fillRect(x,y,Math.max(1,Math.round(w*e.hp/e.maxHp)),2);
+}
+function drawHUD(){
+  ctx.fillStyle='#e8c877';ctx.fillRect(0,0,VW,1);
+  ctx.fillStyle='#5b46a8';ctx.fillRect(0,1,VW,1);
+  ctx.fillStyle='#e8c877';ctx.fillRect(0,VH-1,VW,1);
+  for(let i=0;i<13;i++){ctx.fillStyle=i%3?'#6fd0e8':'#f7e6b0';
+    ctx.fillRect(18+i*36,2,1,1);ctx.fillRect(18+i*36,VH-3,1,1);}
+  /* 左上：血量 HP / 攻击伤害 ATK / 护盾 / 主动技能充能 MP(自动) */
+  const hearts=Math.min(P.maxHp,14);
+  for(let i=0;i<hearts;i++)drawSpr('core',9+i*10,7,false,1,i<P.hp?null:'#2b2f70');
+  drawText('HP '+Math.max(0,Math.ceil(P.hp))+'/'+P.maxHp,9,15,'#c3ccec',1);
+  drawText('ATK '+Math.round(P.stats.dmg),9,25,'#f7e6b0',1);
+  if(P.shield>0)drawText('SHIELD X'+P.shield,9,35,'#6fd0e8',1);
+  drawText('MP',9,44,'#4fa8ff',1);
+  drawBar(26,45,64,5,clamp(P.mp/SKILL_COST,0,1),'#4fa8ff');
+  drawText(Math.round(P.mp)+'/'+P.maxMp,96,44,'#8fa6d8',1);
+  drawText('WAVE '+String(G.wave).padStart(2,'0'),VW-8,5,'#f7e6b0',1,'right');
+  drawText('GOLD '+String(G.gold).padStart(4,'0'),VW-8,15,'#e8c877',1,'right');
+  drawText('KILL '+String(G.kills).padStart(3,'0'),VW-8,25,'#c3ccec',1,'right');
+  const openChests=chests.filter(c=>!c.open).length;
+  if(openChests)drawText('CHEST X'+openChests,VW-8,35,'#f7e6b0',1,'right');
+  if(G.current&&abilInfo(G.current)){
+    const a=abilInfo(G.current);
+    drawText('AUTO '+a.en,VW-8,45,a.c,1,'right');
+  }
+  /* 剩余怪数归零即自动开启星辉商栈：让商店何时出现看得见 */
+  if(G.phase==='fight'&&!G.mega){
+    const left=Math.max(0,(G.waveQuota-G.waveSpawned)+enemies.filter(e=>!e.dead).length);
+    drawText('LEFT '+String(left).padStart(2,'0')+'  SHOP',VW-8,55,'#8fa6d8',1,'right');
+  }
+  /* 5 条能力等级条：当前能力加一道下划线；Boss 波让位给顶部大血条 */
+  if(!G.mega){
+    const by=62;
+    ABILITIES.forEach((a,i)=>{
+      const x=8+i*74,lv=abil[a.k],act=G.current===a.k;
+      ctx.fillStyle=lv?'#1d2a58':'#121a34';ctx.fillRect(x,by,68,7);
+      if(lv){ctx.fillStyle=a.c;ctx.fillRect(x,by,Math.round(68*lv/10),7);}
+      if(act){ctx.fillStyle=a.c;ctx.fillRect(x,by+8,68,1);}
+      ctx.fillStyle='#e8c877';
+      for(let s=1;s<10;s++)ctx.fillRect(x+Math.round(68*s/10),by,1,7);
+      drawText(a.en.slice(0,8)+' '+lv,x+2,by-9,lv?a.c:'#5b6488',1);
+    });
+  }
+  drawText('DMG '+Math.round(P.stats.dmg)+'  SPD '+Math.round(P.stats.move)+
+    '  CRIT '+Math.round(P.stats.crit*100)+'%',8,VH-16,'#8892b8',1);
+  drawText('AUTO',8,VH-27,'#8892b8',1);
+  drawBar(30,VH-27,44,4,clamp(P.mp/SKILL_COST,0,1),P.mp>=SKILL_COST?'#4fa8ff':'#5b46a8');
+  drawText(Math.round(P.mp)+'/'+SKILL_COST,80,VH-27,'#8fa6d8',1);
+  if(G.mega&&!G.mega.dead){
+    const e=G.mega,bw=Math.round(VW*2/3),bx=Math.round((VW-bw)/2),by2=9;
+    ctx.fillStyle='rgba(5,9,26,.9)';ctx.fillRect(bx-4,by2-4,bw+8,17);
+    ctx.fillStyle='#e8c877';ctx.fillRect(bx-4,by2-4,bw+8,1);ctx.fillRect(bx-4,by2+12,bw+8,1);
+    ctx.fillStyle='#2a1226';ctx.fillRect(bx,by2,bw,8);
+    ctx.fillStyle=e.phase===3?'#ff6b9d':(e.phase===2?'#ff8ec7':'#c04a86');
+    ctx.fillRect(bx,by2,Math.round(bw*clamp(e.hp/e.maxHp,0,1)),8);
+    ctx.fillStyle='#fff6d8';ctx.fillRect(bx,by2,Math.min(3,Math.round(bw*clamp(e.hp/e.maxHp,0,1))),8);
+    drawText('MEGA STAR EATER   PHASE '+e.phase,VW/2,by2+13,'#ffd8e6',1,'center');
+  }
+  if(debug){
+    ctx.strokeStyle='#6fd0b0';ctx.lineWidth=.5;
+    for(const e of enemies)if(!e.dead)ctx.strokeRect(e.x-e.hw-cam.x,e.y-e.hh-cam.y,e.hw*2,e.hh*2);
+    ctx.strokeStyle='#6fd0e8';ctx.strokeRect(P.x-P.hw-cam.x,P.y-P.hh-cam.y,P.hw*2,P.hh*2);
+  }
+}
+function render(){
+  ctx.fillStyle='#070b1c';ctx.fillRect(0,0,VW,VH);
+  const sx=shake>0?Math.round((vnoise(frame)*2-1)*shake):0;
+  const sy=shake>0?Math.round((vnoise(frame+77)*2-1)*shake):0;
+  ctx.save();ctx.translate(-Math.round(cam.x)+sx,-Math.round(cam.y)+sy);
+  const tx0=Math.max(0,Math.floor(cam.x/TILE)-1),tx1=Math.min(AW-1,Math.ceil((cam.x+VW)/TILE)+1);
+  const ty0=Math.max(0,Math.floor(cam.y/TILE)-1),ty1=Math.min(AH-1,Math.ceil((cam.y+VH)/TILE)+1);
+  for(let ty=ty0;ty<=ty1;ty++)for(let tx=tx0;tx<=tx1;tx++)drawFloor(tx,ty);
+  for(const w of warnings){
+    const t=1-w.t/w.max,rr=w.r*(1.2-.2*t);
+    ctx.globalAlpha=.35+.55*t;
+    ctx.fillStyle=w.kind==='slam'?'#ff8ec7':'#e8c877';
+    for(let i=0;i<22;i++){const a=i*Math.PI/11;
+      ctx.fillRect(Math.round(w.x+Math.cos(a)*rr),Math.round(w.y+Math.sin(a)*rr*.8),2,2);}
+    ctx.globalAlpha=.10+.16*t;
+    ctx.fillStyle=w.kind==='slam'?'#ff8ec7':'#f7e6b0';
+    ctx.fillRect(Math.round(w.x-rr),Math.round(w.y-rr*.8),Math.round(rr*2),Math.round(rr*1.6));
+    ctx.globalAlpha=1;
+  }
+  for(const c of chests){
+    if(c.open)continue;
+    drawSpr('chest',c.x,c.y+Math.sin(c.t*3)*1,false,1);
+    if(c.hp<c.maxHp){ctx.fillStyle='#070b1c';ctx.fillRect(Math.round(c.x-9)-1,Math.round(c.y-14),19,4);
+      ctx.fillStyle='#e8c877';ctx.fillRect(Math.round(c.x-9),Math.round(c.y-13),Math.round(18*c.hp/c.maxHp),2);}
+  }
+  for(const p of parts)if(p.ghost){
+    ctx.globalAlpha=clamp(p.life/p.max,0,1)*.5;
+    pixelOrb(p.x,p.y,6,{lit:'#6fd0e8',mid:'#3a7a9a',dark:'#142a44',edge:'#08131f'});
+    ctx.globalAlpha=1;}
+  for(const e of enemies){
+    if(e.dead)continue;
+    const bob=Math.sin(e.t*6)*1,r=e.r,st=e.style;
+    orbShadow(e.x,e.y+bob,r);
+    const o={lit:st.lit,mid:st.mid,dark:st.dark,edge:st.edge,roll:Math.sin(e.t*3)*.12,
+      sx:1,sy:1,glow:e.flash>0?.9:0,glowCol:e.flash>0?'#ffffff':st.glow,spin:frame*.045};
+    if(e.flash>0){o.lit='#ffffff';o.mid='#e6ecff';o.dark='#8b96c4';}
+    pixelOrb(e.x,e.y+bob,r,o);
+    if(e.type==='mega'){
+      ctx.fillStyle='#ff8ec7';
+      for(let i=0;i<20;i++){const a=i*Math.PI/10+frame*.014;
+        ctx.fillRect(Math.round(e.x+Math.cos(a)*(r+4)),Math.round(e.y+bob+Math.sin(a)*(r+4)*.8),2,2);}
+    }
+    drawEnemyHP(e);
+  }
+  if(!P.dead)drawPlayerOrb();
+  drawRings();
+  if(P.atkPhase==='active'){
+    const reach=ATK.range+(P.stats.range-22),prog=1-P.atkT/ATK.active;
+    const rad=reach*(.65+.35*Math.sin(prog*Math.PI));
+    const arcs=1+(abil.twin>0?twinExtra(abil.twin):0);
+    for(let k=0;k<arcs;k++){
+      const off=k===0?0:(k%2?1:-1)*(.20+.05*k);
+      for(let i=0;i<12;i++){
+        const a=P.slashFace+off-1+(i/11)*2;
+        const px=P.x+Math.cos(a)*rad,py=P.y+Math.sin(a)*rad*.78;
+        ctx.fillStyle=i>8?'#fff6d8':(i>5?'#6fd0e8':'#e8c877');
+        const sz=(i>4&&i<8)?3:2;
+        ctx.fillRect(Math.round(px),Math.round(py),sz,sz);
+      }
+    }
+  }
+  if(aimTarget&&!aimTarget.dead&&abil.aim>0){
+    ctx.fillStyle='#6fd0e8';
+    const dx=aimTarget.x-P.x,dy=aimTarget.y-P.y,d=Math.hypot(dx,dy)||1;
+    for(let i=14;i<d;i+=9)ctx.fillRect(Math.round(P.x+dx/d*i),Math.round(P.y+dy/d*i),1,1);
+    ctx.fillStyle='#fff6d8';
+    ctx.fillRect(Math.round(aimTarget.x-3),Math.round(aimTarget.y-3),1,1);
+    ctx.fillRect(Math.round(aimTarget.x+3),Math.round(aimTarget.y-3),1,1);
+    ctx.fillRect(Math.round(aimTarget.x-3),Math.round(aimTarget.y+3),1,1);
+    ctx.fillRect(Math.round(aimTarget.x+3),Math.round(aimTarget.y+3),1,1);
+  }
+  if(ringHits.length){
+    const rad=20+2*(abil.ring-1);
+    ctx.fillStyle='rgba(138,99,210,.5)';
+    for(let i=0;i<28;i++){const a=i*Math.PI/14;
+      ctx.fillRect(Math.round(P.x+Math.cos(a)*rad),Math.round(P.y+Math.sin(a)*rad*.86),1,1);}
+    for(const s of ringHits)
+      pixelOrb(s.x,s.y,2.4,{lit:'#e6d9ff',mid:'#8a63d2',dark:'#382268',edge:'#120a28',spec:null});
+  }
+  for(const b of bullets){
+    ctx.fillStyle=b.col;ctx.fillRect(Math.round(b.x-b.hw),Math.round(b.y-b.hh),b.hw*2,b.hh*2);
+    ctx.fillStyle='#ffffff';ctx.fillRect(Math.round(b.x),Math.round(b.y),1,1);
+    if(b.trail){ctx.globalAlpha=.5;ctx.fillRect(Math.round(b.x-b.vx*.02),Math.round(b.y-b.vy*.02),2,2);ctx.globalAlpha=1;}
+  }
+  for(const p of parts)if(!p.ghost){
+    ctx.globalAlpha=clamp(p.life/p.max,0,1);
+    ctx.fillStyle=p.col;ctx.fillRect(Math.round(p.x),Math.round(p.y),p.size,p.size);
+    ctx.globalAlpha=1;}
+  for(const f of floats){
+    ctx.globalAlpha=clamp(f.life/.5,0,1);
+    drawText(f.t,f.x,f.y,f.col,f.scale,'center');ctx.globalAlpha=1;}
+  ctx.restore();
+  drawHUD();
+  if(flash>0){ctx.fillStyle='rgba(238,241,255,'+(flash*.35).toFixed(2)+')';ctx.fillRect(0,0,VW,VH);}
+  if(G.paused){ctx.fillStyle='rgba(5,9,26,.55)';ctx.fillRect(0,0,VW,VH);
+    drawText('PAUSED',VW/2,VH/2-3,'#e8c877',2,'center');}
+}
+
+/* ---------- 15. UI 流程 ---------- */
+const panel=document.getElementById('panel'),ptitle=document.getElementById('ptitle');
+const pbody=document.getElementById('pbody'),pcards=document.getElementById('pcards');
+const pbtn=document.getElementById('pbtn'),toastEl=document.getElementById('toast');
+const pauseEl=document.getElementById('pause'),goldline=document.getElementById('goldline');
+function showToast(s,kind){toastEl.textContent=s;toastEl.dataset.kind=kind||'notice';
+  toastEl.classList.add('on');toastT=2.2;}
+function showModal(){document.getElementById('stage').classList.add('modal');}
+function openChoose(){panel.classList.remove('hidden');panel.classList.add('choose');showModal();}
+function hidePanel(){panel.classList.add('hidden');panel.classList.remove('choose');
+  panel.classList.remove('save-choice');
+  pbtn.classList.remove('hidden');
+  document.getElementById('stage').classList.remove('modal');}
+function cardHTML(o){
+  return '<button class="card'+(o.disabled?' disabled':'')+'" data-k="'+(o.key||'')+'"'+(o.disabled?' disabled':'')+'>'+
+    (o.rare?'<span class="rare">'+o.rare+'</span>':'')+
+    '<span class="sw" style="background:'+o.c+';color:'+o.c+'"></span>'+
+    '<b>'+o.n+'</b><small>'+o.en+'</small><em>'+o.d+'</em>'+
+    '<span class="price">'+o.price+'</span></button>';
+}
+function showTitle(){
+  G.phase='title';panel.classList.remove('hidden');showModal();
+  ptitle.innerHTML='暗星之球<span>UMBRA ORB · INFINITE WAVES</span>';
+  document.getElementById('prule').textContent='无限星潮 / 星界生存';
+  const sv=loadSave();
+  panel.classList.toggle('save-choice',!!sv);
+  if(sv){
+    /* 有存档时精简说明，把矮屏空间留给两个选项 */
+    pbody.innerHTML='<p>一颗黑球 · 无限波次 · 金币能力进化 · 直到星陨</p>'+
+      '<p class="keys">【手机横屏】左轮盘移动　右侧只有 <b>1 个星环普攻按钮</b><br>'+
+      '【键盘】WASD 移动 · J / 空格 普攻 · P 暂停</p>'+
+      '<p class="dim">5 种被动能力与主动技能<b>全自动释放</b>；每波清光自动开启「星辉商栈」。<br>'+
+      '进度每波自动存档：选<b>继续游戏</b>从上次波次接着玩，或<b>新游戏</b>从头开始。</p>';
+    const wv=Math.max(1,sv.wave|0);
+    goldline.innerHTML='检测到上次进度　<b>WAVE '+pad2(wv)+'</b>　星币 '+(sv.gold|0)+' G';
+    pcards.innerHTML=
+      '<button class="card choice" data-go="continue"><span class="rare">CONTINUE</span>'+
+        '<span class="sw" style="background:#f7e6b0;color:#f7e6b0"></span>'+
+        '<b>继续游戏</b><small>WAVE '+pad2(wv)+'</small>'+
+        '<em>星币 '+(sv.gold|0)+' G · 生命 '+Math.max(1,sv.hp|0)+'/'+(sv.maxHp||6)+'</em>'+
+        '<span class="price">▶ RESUME</span></button>'+
+      '<button class="card choice" data-go="new"><span class="rare">NEW RUN</span>'+
+        '<span class="sw" style="background:#8a63d2;color:#8a63d2"></span>'+
+        '<b>新游戏</b><small>FROM WAVE 01</small>'+
+        '<em>清除旧进度 · 从第 1 波重开</em>'+
+        '<span class="price">▶ START</span></button>';
+    pbtn.classList.add('hidden');pbtn.onclick=null;
+    pcards.querySelectorAll('.card').forEach(b=>b.onclick=()=>{
+      actx();
+      if(b.dataset.go==='continue')continueRun(sv);else newRun();
+    });
+  }else{
+    pbody.innerHTML='<p>一颗黑球 · 无限波次 · 金币能力进化 · 直到星陨</p>'+
+      '<p class="keys">【手机横屏】左侧只有轮盘控制方向　右侧只有 <b>1 个星环普通攻击按钮</b>（按住连击）<br>'+
+      '【键盘】WASD 移动 · J / 空格 星环普攻 · P 暂停 · F1 碰撞盒</p>'+
+      '<p class="dim"><b>5 种被动能力全部自动释放</b>（不依赖任何按键）：星轨环常驻环绕、陨星定时天降、星眼 / 贯星 / 双生星定时自动发射。<br>'+
+      '<b>主动技能过几秒自动释放</b>：星能(蓝)充满即由黑球自动施放「当前能力」爆发，无需按钮。<br>'+
+      '<b>每波清光后自动开启「星辉商栈」</b>，用金币把 5 种能力各进化到 10 阶或强化黑球；宝匣 / 商栈选择「当前能力」= 自动主动技能；怪物<b>掉落星辉宝匣</b>，靠近自动开启或击碎，全屏暂停三选一。<br>'+
+      '金币：小怪 1 / 精英 5 / 小Boss 10 / 首领 20 / Boss 30 / 超级大Boss 50；护盾可叠加；每 10 波超级大 Boss 独立登场。<b>纯 2D 平面，无跳跃 / 滑铲 / 交互键。</b><br>'+
+      '<b>进度每波自动存档</b>：再次打开链接可选「继续游戏」从上次波次接着玩，或「新游戏」从头开始。</p>';
+    goldline.textContent='';pcards.innerHTML='';
+    pbtn.classList.remove('hidden');pbtn.textContent='踏 入 星 界';
+    pbtn.onclick=()=>{actx();newRun();};
+  }
+}
+function newRun(){
+  clearSave();   /* 新游戏清除旧进度；随后 startWave() 重新写入 wave=1 存档 */
+  G.seed=(Math.random()*0xffffffff)>>>0;rng=makeRng(G.seed);
+  G.phase='fight';G.paused=false;G.wave=1;G.kills=0;G.gold=0;G.spentGold=0;G.time=0;
+  G.bought={heal:0,hp:0,dmg:0,spd:0,shield:0};
+  abil={aim:0,ring:0,pierce:0,twin:0,meteor:0};G.current=null;G.dropPity=0;
+  meteorT=3;orbitA=0;aimTarget=null;ringHits=[];
+  enemies=[];bullets=[];chests=[];parts=[];floats=[];warnings=[];pickups=[];rings=[];
+  P=makePlayer();applyStats();makeGrid();
+  P.x=ARENA_W/2;P.y=ARENA_H/2;P.px=P.x;P.py=P.y;
+  cam.x=clamp(P.x-VW/2,0,ARENA_W-VW);cam.y=clamp(P.y-VH/2,0,ARENA_H-VH);
+  touchAtk=false;hidePanel();pauseEl.classList.add('hidden');
+  startWave();actx();
+}
+/* 继续游戏：从存档波次的开头重新开波，能力 / 金币 / 属性 / 血量 / 护盾 / 种子全部恢复 */
+function continueRun(d){
+  G.seed=(d.seed>>>0)||1;rng=makeRng(G.seed);
+  if(typeof rng.setState==='function'&&Number.isFinite(d.rngState))rng.setState(d.rngState);
+  G.phase='fight';G.paused=false;G.wave=Math.max(1,d.wave|0);
+  G.kills=Math.max(0,d.kills|0);G.gold=Math.max(0,d.gold|0);
+  G.spentGold=Math.max(0,d.spentGold|0);G.time=Math.max(0,+d.time||0);
+  G.dropPity=Math.max(0,d.dropPity|0);
+  G.current=(d.current&&ABILITIES.some(a=>a.k===d.current))?d.current:null;
+  G.bought=Object.assign({heal:0,hp:0,dmg:0,spd:0,shield:0},d.bought||{});
+  abil=Object.assign({aim:0,ring:0,pierce:0,twin:0,meteor:0},d.abil||{});
+  for(const k in abil)abil[k]=clamp(abil[k]|0,0,10);
+  meteorT=3;orbitA=0;aimTarget=null;ringHits=[];
+  enemies=[];bullets=[];chests=[];parts=[];floats=[];warnings=[];pickups=[];rings=[];
+  P=makePlayer();
+  P.maxHp=clamp(d.maxHp|0,1,99);P.hp=clamp(d.hp|0,1,P.maxHp);
+  P.shield=clamp(d.shield|0,0,99);
+  P.bonus=Object.assign({move:0,dmg:0,crit:0,range:0},d.bonus||{});
+  applyStats();makeGrid();
+  P.x=ARENA_W/2;P.y=ARENA_H/2;P.px=P.x;P.py=P.y;
+  cam.x=clamp(P.x-VW/2,0,ARENA_W-VW);cam.y=clamp(P.y-VH/2,0,ARENA_H-VH);
+  touchAtk=false;hidePanel();pauseEl.classList.add('hidden');
+  startWave();                 /* 自动 saveGame()，把随机序列等刷新回存档 */
+  actx();
+  showToast('CONTINUE  WAVE '+pad2(G.wave),'notice');
+}
+function openShop(){
+  openChoose();
+  ptitle.innerHTML='星辉商栈 · STAR BAZAAR<span>WAVE '+String(G.wave).padStart(2,'0')+' CLEAR　|　用金币购买能力</span>';
+  document.getElementById('prule').textContent='用金币进化能力 / 强化黑球';
+  pbody.innerHTML='<p class="dim"><b>清光本波怪物即自动开启星辉商栈</b>（每波一次）。用金币进化 5 种能力（各 10 阶）或强化黑球；购买任意能力即设为<b>当前能力</b>（决定每几秒自动释放的主动技能）。<b>选好后点下方按钮进入下一波</b>。</p>';
+  goldline.innerHTML='星币 <b>'+G.gold+'</b> G　|　当前能力 <b style="color:'+
+    (G.current?abilInfo(G.current).c:'#8fa6d8')+'">'+
+    (G.current?abilInfo(G.current).n+' L'+abil[G.current]:'未选择')+'</b>';
+  const cards=[];
+  for(const a of ABILITIES){
+    const lv=abil[a.k],max=lv>=10,cost=ABIL_COST(lv);
+    cards.push({key:'ab:'+a.k,n:a.n+' '+(max?'MAX':'L'+(lv+1)),en:a.en,
+      d:max?'已满阶':(lv===0?a.d:a.g(lv+1)),c:a.c,
+      rare:max?'LEGEND':(lv===0?'RARE':'EPIC'),
+      price:max?'-':cost+' G',disabled:max||G.gold<cost});
+  }
+  for(const s of STATS){
+    const cost=statCost(s.k),full=s.k==='heal'&&P.hp>=P.maxHp;
+    cards.push({key:'st:'+s.k,n:s.n,en:s.en,d:s.d,c:s.c,
+      rare:'COMMON',price:cost+' G',disabled:full||G.gold<cost});
+  }
+  pcards.innerHTML=cards.map(cardHTML).join('');
+  pcards.querySelectorAll('.card:not(.disabled)').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.k;
+    if(k.indexOf('ab:')===0){
+      const key=k.slice(3),cost=ABIL_COST(abil[key]);
+      if(G.gold<cost||abil[key]>=10)return;
+      G.gold-=cost;G.spentGold+=cost;abil[key]++;G.current=key;applyStats();sfx('buy');
+      showToast('EVOLVE  '+abilInfo(key).en+'  LV '+abil[key],'blessing');
+    }else{
+      const key=k.slice(3),cost=statCost(key);
+      if(G.gold<cost)return;
+      G.gold-=cost;G.spentGold+=cost;G.bought[key]++;
+      if(key==='heal')P.hp=Math.min(P.maxHp,P.hp+2);
+      else if(key==='hp'){P.maxHp+=2;P.hp=P.maxHp;}
+      else if(key==='dmg')P.bonus.dmg+=2;
+      else if(key==='spd')P.bonus.move+=8;
+      else if(key==='shield')P.shield++;
+      applyStats();sfx('buy');
+    }
+    openShop();
+  });
+  pbtn.classList.remove('hidden');pbtn.textContent='进入第 '+String(G.wave+1).padStart(2,'0')+' 波  ▸';
+  pbtn.onclick=()=>{G.wave++;G.phase='fight';hidePanel();startWave();};
+}
+const CHEST_POOL=[
+  {k:'heal', n:'星核治愈',en:'HEAL +2',d:'回复 2 点生命',c:'#ffb3d0',f:()=>{P.hp=Math.min(P.maxHp,P.hp+2);}},
+  {k:'hp',   n:'命星扩容',en:'MAX HP +2',d:'最大生命 +2 并回满',c:'#e879a8',f:()=>{P.maxHp+=2;P.hp=P.maxHp;}},
+  {k:'dmg',  n:'星刃淬炼',en:'BASE DMG +2',d:'基础伤害 +2',c:'#e8c877',f:()=>{P.bonus.dmg+=2;applyStats();}},
+  {k:'spd',  n:'流光加速',en:'MOVE +8',d:'移动速度 +8',c:'#6fd0b0',f:()=>{P.bonus.move+=8;applyStats();}},
+  {k:'shield',n:'星盾',en:'SHIELD +1',d:'护盾 +1 层，可叠加',c:'#6fd0e8',f:()=>{P.shield++;}},
+  {k:'abil', n:'能力进化',en:'EVOLVE',d:'随机一种能力 +1 阶（未满则解锁）',c:'#8a63d2',f:()=>{
+      const pool=ABILITIES.filter(a=>abil[a.k]<10);
+      if(pool.length){const a=pick(pool);abil[a.k]++;applyStats();
+        showToast('EVOLVE  '+a.en+'  LV '+abil[a.k],'blessing');}
+      else{G.gold+=30;showToast('ALL MAX  +30 G','victory');}}},
+  {k:'gold', n:'星币袋',en:'GOLD +15',d:'获得 15 星币',c:'#f7e6b0',f:()=>{G.gold+=15;}}
+];
+function openChestReward(){
+  if(G.phase!=='fight')return;
+  G.phase='chest';                 /* 全屏面板，游戏暂停 */
+  /* 至少 1 张基础能力卡，其余为黑球强化；三选一 */
+  const powerPool=ABILITIES.filter(a=>abil[a.k]<10),opts=[];
+  if(powerPool.length){
+    const a=pick(powerPool);
+    opts.push({n:a.n,en:a.en+'  L'+(abil[a.k]+1),
+      d:'解锁 / 进化此基础能力，并设为当前能力',c:a.c,rare:'BASE POWER',
+      f:()=>{abil[a.k]++;G.current=a.k;applyStats();
+        showToast('POWER  '+a.en+'  LV '+abil[a.k],'blessing');}});
+  }
+  const boosts=CHEST_POOL.slice();
+  while(opts.length<3&&boosts.length){
+    const o=boosts.splice(Math.floor(R()*boosts.length),1)[0];
+    opts.push({n:o.n,en:o.en,d:o.d,c:o.c,rare:'BOON',f:o.f});
+  }
+  openChoose();
+  ptitle.innerHTML='星辉宝匣<span>STAR CHEST · CHOOSE A POWER</span>';
+  document.getElementById('prule').textContent='选择基础能力 / 强化黑球';
+  pbody.innerHTML='<p class="dim">宝匣由怪物掉落或击碎获得。<b>游戏已暂停</b>，选择一项后立即继续战斗，'+
+    '<b>当前能力（自动主动技能）会同步更新</b>。</p>';
+  goldline.innerHTML='星币 <b>'+G.gold+'</b> G　|　当前能力 <b style="color:'+
+    (G.current?abilInfo(G.current).c:'#8fa6d8')+'">'+
+    (G.current?abilInfo(G.current).n+' L'+abil[G.current]:'未选择')+'</b>';
+  pcards.innerHTML=opts.map((o,i)=>'<button class="card" data-i="'+i+'">'+
+    '<span class="rare">'+o.rare+'</span><span class="sw" style="background:'+o.c+';color:'+o.c+'"></span>'+
+    '<b>'+o.n+'</b><small>'+o.en+'</small><em>'+o.d+'</em><span class="price">FREE</span></button>').join('');
+  pcards.querySelectorAll('.card').forEach(b=>b.onclick=()=>{
+    opts[+b.dataset.i].f();sfx('pick');G.phase='fight';hidePanel();});
+  pbtn.classList.add('hidden');
+}
+function gameOver(){
+  P.dead=true;G.phase='dead';sfx('die');
+  spawnRing(P.x,P.y,{r0:6,r1:44,life:.55,col:'#e8c877',col2:'#e879a8',n:28});
+  panel.classList.remove('hidden');showModal();
+  ptitle.innerHTML='星 陨<span>FALLEN STAR</span>';
+  document.getElementById('prule').textContent='THE ORB FADES';
+  const al=ABILITIES.map(a=>a.en+':'+abil[a.k]).join('  ');
+  const cur=G.current?abilInfo(G.current).n+' L'+abil[G.current]:'无';
+  pbody.innerHTML='<p>抵达第 <b>'+G.wave+'</b> 波　击破 <b>'+G.kills+'</b>　'+
+    '当前能力 <b>'+cur+'</b>　攻击 <b>'+Math.round(P.stats.dmg)+'</b></p>'+
+    '<p>存续 <b>'+G.time.toFixed(0)+'</b> 秒　累计星币 <b>'+(G.gold+G.spentGold)+'</b></p>'+
+    '<p class="dim">'+al+'<br>SEED '+G.seed.toString(16).toUpperCase()+
+    '<br>本机已保存第 <b>'+G.wave+'</b> 波进度：重开链接可选「继续游戏」从第 '+G.wave+' 波再来。</p>';
+  goldline.textContent='';pcards.innerHTML='';pbtn.classList.remove('hidden');
+  pbtn.textContent='再 燃 一 次';pbtn.onclick=()=>{hidePanel();newRun();};
+}
+function togglePause(){
+  if(G.phase!=='fight')return;
+  G.paused=!G.paused;pauseEl.classList.toggle('hidden',!G.paused);
+}
+
+/* ---------- 16. 输入 ---------- */
+const KMAP={arrowup:'w',arrowdown:'s',arrowleft:'a',arrowright:'d',' ':'j'};
+addEventListener('keydown',e=>{
+  const raw=e.key.toLowerCase(),k=KMAP[raw]||raw;
+  keys[k]=true;if(!e.repeat)pressed[k]=true;
+  if(k==='j')atkBuffer=.18;
+  if(k==='f1'||raw==='f1')debug=!debug;
+  if(raw==='p'||raw==='escape')togglePause();
+  if(['w','a','s','d','j','p',' ','f1','arrowup','arrowdown','arrowleft','arrowright'].includes(raw))e.preventDefault();
+});
+addEventListener('keyup',e=>{const raw=e.key.toLowerCase();keys[KMAP[raw]||raw]=false;});
+cv.addEventListener('pointerdown',e=>{
+  if(e.pointerType!=='mouse')return;
+  e.preventDefault();mouse.down=true;atkBuffer=.18;actx();
+});
+addEventListener('pointerup',e=>{if(e.pointerType==='mouse')mouse.down=false;});
+addEventListener('mouseup',()=>mouse.down=false);
+cv.addEventListener('pointermove',e=>{
+  if(e.pointerType!=='mouse'||touchUI)return;
+  const r=cv.getBoundingClientRect();
+  mouse.x=(e.clientX-r.left)/r.width*VW;mouse.y=(e.clientY-r.top)/r.height*VH;mouse.aim=true;
+});
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+const touchEl=document.getElementById('touch');
+const stickZone=document.getElementById('stickZone'),stickBase=document.getElementById('stickBase');
+const stickKnob=document.getElementById('stickKnob');
+const tbTouch=document.getElementById('tbTouch'),tbFull=document.getElementById('tbFull'),tbPause=document.getElementById('tbPause');
+const btn={atk:document.getElementById('bAtk')};
+function setTouchUI(on){
+  touchUI=on;touchEl.classList.toggle('off',!on);
+  tbTouch.classList.toggle('on',on);tbTouch.textContent=on?'触屏 ON':'触屏 OFF';
+  if(on){mouse.aim=false;mouse.down=false;}
+  else{touchAtk=false;stick.x=stick.y=0;stick.id=-1;
+    stickBase.classList.remove('on');stickKnob.style.transform='translate(0px,0px)';}
+  try{localStorage.setItem('umbraTouch',on?'1':'0');}catch(err){}
+}
+try{if(localStorage.getItem('umbraTouch')==='0')setTouchUI(false);}catch(err){}
+tbTouch.addEventListener('click',()=>setTouchUI(!touchUI));
+function fullOn(){return !!(document.fullscreenElement||document.webkitFullscreenElement);}
+function syncFullBtn(){const on=fullOn();
+  tbFull.textContent=on?'退出全屏':'全屏';tbFull.classList.toggle('on',on);}
+/* 在预览框(iframe)里运行时，缩放由外层容器控制，页面内拦不住；
+   全屏按钮此时改为打开独立页面，让游戏以顶层页面独占屏幕运行 */
+function framed(){try{return window.self!==window.top;}catch(err){return true;}}
+function openStandalone(){
+  try{
+    const w=window.open(location.href,'_blank','noopener');
+    if(!w)showToast('弹窗被拦截，请用浏览器打开该链接');
+  }catch(err){showToast('无法打开独立页面','warning');}
+}
+function enterFull(){
+  const de=document.documentElement,req=de.requestFullscreen||de.webkitRequestFullscreen;
+  const fr=framed();
+  if(!req){fr?openStandalone():showToast('此浏览器不支持网页全屏，上滑可隐藏地址栏');return;}
+  let p;try{p=req.call(de,{navigationUI:'hide'});}
+  catch(err){try{p=req.call(de);}catch(err2){fr?openStandalone():showToast('无法进入全屏','warning');return;}}
+  const land=()=>{try{const o=screen.orientation;if(o&&o.lock)o.lock('landscape').catch(()=>{});}catch(err){}};
+  if(p&&p.then)p.then(land).catch(()=>{fr?openStandalone():showToast('无法进入全屏','warning');});else land();
+}
+tbFull.addEventListener('click',()=>{
+  try{
+    if(fullOn()){const p=document.exitFullscreen&&document.exitFullscreen();if(p&&p.catch)p.catch(()=>{});}
+    else enterFull();
+  }catch(err){}
+  setTimeout(syncFullBtn,60);
+});
+document.addEventListener('fullscreenchange',()=>{syncFullBtn();fitView();});
+document.addEventListener('webkitfullscreenchange',()=>{syncFullBtn();fitView();});
+syncFullBtn();
+tbPause.addEventListener('click',togglePause);
+function stickStart(e){
+  if(!touchUI||stick.id!==-1)return;e.preventDefault();
+  const r=stickZone.getBoundingClientRect();
+  stick.id=e.pointerId;stick.cx=e.clientX;stick.cy=e.clientY;
+  stick.max=Math.max(24,stickBase.getBoundingClientRect().width*.3);
+  stickBase.style.left=(e.clientX-r.left)+'px';stickBase.style.top=(e.clientY-r.top)+'px';
+  stickBase.classList.add('on');
+  try{stickZone.setPointerCapture(e.pointerId);}catch(err){}
+  stickMove(e);
+}
+function stickMove(e){
+  if(e.pointerId!==stick.id)return;
+  const dx=e.clientX-stick.cx,dy=e.clientY-stick.cy,d=Math.hypot(dx,dy);
+  const t=d<6?0:Math.min(1,d/stick.max);
+  stick.x=d<6?0:dx/d*t;stick.y=d<6?0:dy/d*t;
+  const ox=d<6?0:dx/d*stick.max*t,oy=d<6?0:dy/d*stick.max*t;
+  stickKnob.style.transform='translate('+ox.toFixed(1)+'px,'+oy.toFixed(1)+'px)';
+}
+function stickEnd(e){
+  if(e.pointerId!==stick.id)return;
+  stick.id=-1;stick.x=stick.y=0;
+  stickBase.classList.remove('on');stickKnob.style.transform='translate(0px,0px)';
+}
+stickZone.addEventListener('pointerdown',stickStart);
+stickZone.addEventListener('pointermove',stickMove);
+stickZone.addEventListener('pointerup',stickEnd);
+stickZone.addEventListener('pointercancel',stickEnd);
+stickZone.addEventListener('lostpointercapture',stickEnd);
+function bindBtn(el,down,up){
+  el.addEventListener('pointerdown',e=>{
+    e.preventDefault();e.stopPropagation();
+    if(!touchUI||G.phase!=='fight')return;
+    actx();el.classList.add('hit');el._pid=e.pointerId;
+    try{el.setPointerCapture(e.pointerId);}catch(err){}
+    if(down)down();
+  });
+  const end=e=>{
+    if(el._pid!==undefined&&e.pointerId!==el._pid)return;
+    el.classList.remove('hit');el._pid=undefined;if(up)up();
+  };
+  el.addEventListener('pointerup',end);
+  el.addEventListener('pointercancel',end);
+  el.addEventListener('lostpointercapture',end);
+}
+bindBtn(btn.atk,()=>{touchAtk=true;atkBuffer=.18;},()=>{touchAtk=false;});
+
+/* 原生手势已全禁，面板内容超出时用单指拖动自行滚动，避免小屏够不到按钮 */
+(function(){
+  let box=null,startY=0,startTop=0;
+  const pick=t=>(t&&t.closest)?t.closest('#panel .box'):null;
+  document.addEventListener('touchstart',e=>{
+    box=pick(e.target);if(!box)return;
+    startY=e.touches[0].clientY;startTop=box.scrollTop;
+  },{passive:true});
+  document.addEventListener('touchmove',e=>{
+    if(!box||e.touches.length!==1)return;
+    const dy=startY-e.touches[0].clientY;
+    if(Math.abs(dy)<4)return;
+    box.scrollTop=startTop+dy;e.preventDefault();
+  },{passive:false});
+  document.addEventListener('touchend',()=>{box=null;},{passive:true});
+  document.addEventListener('touchcancel',()=>{box=null;},{passive:true});
+})();
+
+/* 画布自适应：视野恒定 480x270(16:9)，等比缩放到可用区域并居中，绝不拉伸 */
+const stageEl=document.getElementById('stage');
+const DW=480,DH=270;                      /* 设计视野：恒定 16:9，手机/平板/桌面构图一致 */
+function fitView(){
+  const wrap=stageEl.parentNode;
+  const aw=(wrap&&wrap.clientWidth)||innerWidth,ah=(wrap&&wrap.clientHeight)||innerHeight;
+  if(!(aw>2&&ah>2))return;
+  if(VW!==DW||cv.width!==DW){
+    VW=DW;cv.width=DW;cv.height=DH;
+    ctx.imageSmoothingEnabled=false;
+    cam.x=clamp(cam.x,0,ARENA_W-VW);cam.y=clamp(cam.y,0,ARENA_H-VH);
+  }
+  /* 等比缩放到刚好放进可用区域，多余的宽度/高度留给背景，绝不拉伸画面 */
+  const s=Math.min(aw/DW,ah/DH);
+  const cw=(DW*s).toFixed(2)+'px',ch=(DH*s).toFixed(2)+'px';
+  stageEl.style.width=cw;stageEl.style.height=ch;
+  cv.style.width=cw;cv.style.height=ch;
+}
+addEventListener('resize',fitView);
+addEventListener('orientationchange',()=>setTimeout(fitView,320));
+if(window.visualViewport)window.visualViewport.addEventListener('resize',fitView);
+
+function syncTouchHUD(){
+  /* 主动技能与 5 种被动能力全部自动释放，右侧无需任何技能按钮；
+     仅保留 Boss 大血条占据顶部时工具栏下移让位 */
+  document.getElementById('toolbar').style.top=G.mega?'11vmin':'';
+}
+
+/* ---------- 17. 主循环 ---------- */
+let last=performance.now();
+function loop(t){
+  const dt=Math.min(.033,(t-last)/1000);last=t;frame++;
+  if(toastT>0){toastT-=dt;if(toastT<=0)toastEl.classList.remove('on');}
+  if(G.phase==='fight'&&!G.paused){
+    if(hitstop>0)hitstop-=dt;else update(dt);
+    if(flash>0)flash-=dt;
+  }
+  render();syncTouchHUD();
+  pressed={};
+  requestAnimationFrame(loop);
+}
+P=makePlayer();applyStats();makeGrid();fitView();
+cam.x=clamp(P.x-VW/2,0,ARENA_W-VW);cam.y=clamp(P.y-VH/2,0,ARENA_H-VH);
+showTitle();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.umbra.orb'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.umbra.orb"
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        debug {
+            // 云端构建出来的 debug 包自带调试签名，可直接安装
+            applicationIdSuffix ""
+        }
+        release {
+            minifyEnabled false
+            // 未配置签名时，用 debug 签名产出可安装的 release 包
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    // 没有任何第三方依赖：只有系统自带的 WebView
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
